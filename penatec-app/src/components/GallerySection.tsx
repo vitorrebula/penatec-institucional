@@ -1,5 +1,9 @@
 'use client'
 
+import { useState, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { fadeUp, scaleUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
+
 interface MockPhotoProps {
   variant: 'dark-blue' | 'graphite' | 'deep-navy' | 'steel' | 'warm-dark' | 'industrial'
   label: string
@@ -19,14 +23,14 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
   const { bg, accent } = palettes[variant]
 
   return (
-    <div style={{
-      position: 'relative', width: '100%',
-      height: tall ? '100%' : 240,
-      overflow: 'hidden', cursor: 'pointer',
-      transition: 'transform 0.3s',
-    }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)' }}
+    <motion.div
+      style={{
+        position: 'relative', width: '100%',
+        height: tall ? '100%' : 240,
+        overflow: 'hidden', cursor: 'pointer',
+      }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.3, ease: EASE_EXPO }}
     >
       {/* Background gradient */}
       <div style={{ position: 'absolute', inset: 0, background: bg }} />
@@ -39,20 +43,16 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
         preserveAspectRatio="xMidYMid slice"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Central geometric form */}
         <rect x="80" y="40" width="140" height="120" rx="2" fill="none" stroke={accent} strokeWidth="0.8" />
         <rect x="100" y="60" width="100" height="80" rx="1" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.6" />
-        {/* Corner marks */}
         <polyline points="80,40 64,40 64,56" fill="none" stroke={accent} strokeWidth="1" />
         <polyline points="220,40 236,40 236,56" fill="none" stroke={accent} strokeWidth="1" />
         <polyline points="80,160 64,160 64,144" fill="none" stroke={accent} strokeWidth="1" />
         <polyline points="220,160 236,160 236,144" fill="none" stroke={accent} strokeWidth="1" />
-        {/* Center cross */}
         <line x1="120" y1="100" x2="180" y2="100" stroke={accent} strokeWidth="0.5" opacity="0.5" />
         <line x1="150" y1="70"  x2="150" y2="130" stroke={accent} strokeWidth="0.5" opacity="0.5" />
         <circle cx="150" cy="100" r="16" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.6" />
         <circle cx="150" cy="100" r="6"  fill={accent} opacity="0.3" />
-        {/* Horizontal scan lines */}
         <line x1="0" y1="20"  x2="300" y2="20"  stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
         <line x1="0" y1="180" x2="300" y2="180" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
       </svg>
@@ -93,17 +93,63 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
           <circle cx="12" cy="13" r="4"/>
         </svg>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
+const GALLERY_ALL = [
+  { variant: 'dark-blue'  as const, label: 'Equipamentos Industriais',  category: 'Linha Principal'  },
+  { variant: 'graphite'   as const, label: 'Ferramentas Especializadas', category: 'Linha Técnica'    },
+  { variant: 'steel'      as const, label: 'Sistemas de Manutenção',     category: 'Linha Premium'    },
+  { variant: 'warm-dark'  as const, label: 'Peças e Componentes',        category: 'Linha Industrial' },
+  { variant: 'industrial' as const, label: 'Soluções Personalizadas',    category: 'Sob Demanda'      },
+  { variant: 'deep-navy'  as const, label: 'Assistência Técnica',        category: 'Suporte On-site'  },
+  { variant: 'graphite'   as const, label: 'Consultoria Técnica',        category: 'Assessoria'       },
+  { variant: 'dark-blue'  as const, label: 'Manutenção Preventiva',      category: 'Serviços'         },
+]
+
+/* Stagger child variant for individual grid cells */
+const gridItem = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] } },
+}
+
 export default function GallerySection() {
+  const [activePhoto, setActivePhoto] = useState(0)
+  const galleryCarouselRef = useRef<HTMLDivElement>(null)
+
+  const onGalleryScroll = useCallback(() => {
+    const el = galleryCarouselRef.current
+    if (!el) return
+    const containerRect = el.getBoundingClientRect()
+    let closestIdx = 0
+    let minDist = Infinity
+    Array.from(el.children).forEach((child, idx) => {
+      const dist = Math.abs(child.getBoundingClientRect().left - containerRect.left)
+      if (dist < minDist) { minDist = dist; closestIdx = idx }
+    })
+    setActivePhoto(closestIdx)
+  }, [])
+
+  const scrollToPhoto = useCallback((idx: number) => {
+    const el = galleryCarouselRef.current
+    if (!el) return
+    const card = el.children[idx] as HTMLElement
+    if (card) el.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
+  }, [])
+
   return (
     <section id="galeria" style={{ backgroundColor: '#F4F6FA', padding: '120px 0' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48, flexWrap: 'wrap', gap: 16 }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48, flexWrap: 'wrap', gap: 16 }}
+        >
           <div>
             <span style={{
               display: 'inline-block',
@@ -128,40 +174,98 @@ export default function GallerySection() {
             Portfólio diversificado com soluções técnicas para atender a diferentes
             segmentos industriais com qualidade e confiança.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Bento grid */}
-        <div className="gallery-bento" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 3 }}>
-
-          {/* Row 1 — tall left + 2 right */}
-          <div style={{ gridRow: '1 / 3' }}>
+        {/* Bento grid — staggered */}
+        <motion.div
+          className="gallery-bento"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 3 }}
+        >
+          <motion.div variants={gridItem} style={{ gridRow: '1 / 3' }}>
             <MockPhoto variant="dark-blue" label="Equipamentos Industriais" category="Linha Principal" tall />
-          </div>
-          <div>
+          </motion.div>
+          <motion.div variants={gridItem}>
             <MockPhoto variant="graphite" label="Ferramentas Especializadas" category="Linha Técnica" />
-          </div>
-          <div>
+          </motion.div>
+          <motion.div variants={gridItem}>
             <MockPhoto variant="steel" label="Sistemas de Manutenção" category="Linha Premium" />
-          </div>
-
-          {/* Row 2 — 2 right continue */}
-          <div>
+          </motion.div>
+          <motion.div variants={gridItem}>
             <MockPhoto variant="warm-dark" label="Peças e Componentes" category="Linha Industrial" />
-          </div>
-          <div>
+          </motion.div>
+          <motion.div variants={gridItem}>
             <MockPhoto variant="industrial" label="Soluções Personalizadas" category="Sob Demanda" />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* Bottom row — 3 equal */}
-        <div className="gallery-bento" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, marginTop: 3 }}>
-          <MockPhoto variant="deep-navy" label="Assistência Técnica" category="Suporte On-site" />
-          <MockPhoto variant="graphite" label="Consultoria Técnica" category="Assessoria" />
-          <MockPhoto variant="dark-blue" label="Manutenção Preventiva" category="Serviços" />
+        {/* Bottom row — staggered */}
+        <motion.div
+          className="gallery-bento"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, marginTop: 3 }}
+        >
+          <motion.div variants={gridItem}>
+            <MockPhoto variant="deep-navy" label="Assistência Técnica" category="Suporte On-site" />
+          </motion.div>
+          <motion.div variants={gridItem}>
+            <MockPhoto variant="graphite" label="Consultoria Técnica" category="Assessoria" />
+          </motion.div>
+          <motion.div variants={gridItem}>
+            <MockPhoto variant="dark-blue" label="Manutenção Preventiva" category="Serviços" />
+          </motion.div>
+        </motion.div>
+
+        {/* Mobile carousel */}
+        <div className="gallery-mobile-carousel">
+          <div
+            ref={galleryCarouselRef}
+            className="gallery-carousel-track"
+            onScroll={onGalleryScroll}
+          >
+            {GALLERY_ALL.map((item, i) => (
+              <div key={i} className="gallery-carousel-card" style={{ flex: '0 0 82vw', maxWidth: 320 }}>
+                <MockPhoto variant={item.variant} label={item.label} category={item.category} />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 20 }}>
+            {GALLERY_ALL.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToPhoto(i)}
+                aria-label={`Foto ${i + 1} de ${GALLERY_ALL.length}`}
+                style={{
+                  width: activePhoto === i ? 20 : 6,
+                  height: 6,
+                  backgroundColor: activePhoto === i ? '#FFCB08' : 'rgba(23,35,58,0.2)',
+                  border: 'none',
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'width 0.3s ease, background-color 0.3s ease',
+                  flexShrink: 0,
+                }}
+              />
+            ))}
+          </div>
         </div>
 
         {/* CTA */}
-        <div style={{ textAlign: 'center', marginTop: 56 }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.8 }}
+          style={{ textAlign: 'center', marginTop: 56 }}
+        >
           <button
             onClick={() => {
               const el = document.querySelector('#contato')
@@ -183,10 +287,24 @@ export default function GallerySection() {
               <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
             </svg>
           </button>
-        </div>
+        </motion.div>
       </div>
 
       <style>{`
+        .gallery-mobile-carousel { display: none; }
+        .gallery-carousel-track {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          gap: 12px;
+          padding: 0 20px;
+          scroll-padding-left: 20px;
+        }
+        .gallery-carousel-track::-webkit-scrollbar { display: none; }
+        .gallery-carousel-card { scroll-snap-align: start; }
+
         @media (max-width: 900px) {
           .gallery-bento { grid-template-columns: 1fr 1fr !important; }
           .gallery-bento > div:first-child { grid-row: auto !important; }
@@ -194,8 +312,8 @@ export default function GallerySection() {
         @media (max-width: 600px) {
           #galeria { padding: 72px 0 !important; }
           #galeria > div { padding: 0 20px !important; }
-          .gallery-bento { grid-template-columns: 1fr !important; }
-          .gallery-bento > div > div { height: 220px !important; }
+          .gallery-bento { display: none !important; }
+          .gallery-mobile-carousel { display: block; margin: 0 -20px; }
         }
       `}</style>
     </section>

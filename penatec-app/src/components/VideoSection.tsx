@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { fadeUp, fadeLeft, fadeRight, EASE_EXPO } from '@/lib/animations'
 
 const PENATEC_VIDEO_SRC =
   'https://penatec.com.br/wp-content/uploads/2024/08/WhatsApp-Video-2024-07-15-at-14.52.28.mp4'
@@ -121,9 +123,15 @@ export default function VideoSection() {
         pointerEvents: 'none',
       }} />
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1 }}>
+      <div id="video-section-wrap" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1 }}>
 
-        <div style={{ marginBottom: 56 }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          style={{ marginBottom: 56 }}
+        >
           <span style={{
             display: 'inline-block',
             fontFamily: 'var(--font-barlow)', fontWeight: 600,
@@ -139,17 +147,30 @@ export default function VideoSection() {
           }}>
             Uma História de Excelência<br />em Imagens
           </h2>
-        </div>
+        </motion.div>
 
         {/* Main layout: large video + sidebar */}
         <div id="video-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 3, alignItems: 'start' }}>
 
-          <MainVideo
-            title="PENATEC — 50 Anos de Confiança e Excelência"
-            description="Uma jornada de meio século construindo relações sólidas, entregando qualidade e inovando continuamente no fornecimento de produtos e serviços industriais."
-          />
+          <motion.div
+            variants={fadeRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+          >
+            <MainVideo
+              title="PENATEC — 50 Anos de Confiança e Excelência"
+              description="Uma jornada de meio século construindo relações sólidas, entregando qualidade e inovando continuamente no fornecimento de produtos e serviços industriais."
+            />
+          </motion.div>
 
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '24px' }}>
+          <motion.div
+            variants={fadeLeft}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '24px' }}
+          >
             <h4 style={{
               fontFamily: 'var(--font-barlow)', fontWeight: 800,
               fontSize: 15, color: 'rgba(255,255,255,0.6)',
@@ -178,7 +199,7 @@ export default function VideoSection() {
             >
               Ver Todos os Vídeos
             </button>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -190,7 +211,8 @@ export default function VideoSection() {
           #video-layout { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 600px) {
-          #video-layout > div:last-child { display: none !important; }
+          #video-section-wrap { padding: 0 20px !important; }
+          #video-layout > div:last-child { padding: 16px !important; }
         }
       `}</style>
     </section>

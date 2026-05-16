@@ -1,5 +1,8 @@
 'use client'
 
+import { motion } from 'framer-motion'
+import { fadeUp, fadeRight, fadeLeft, EASE_EXPO } from '@/lib/animations'
+
 export default function AssistanceSection() {
   return (
     <section id="assistencia" style={{ backgroundColor: '#17233A', padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
@@ -13,10 +16,16 @@ export default function AssistanceSection() {
         pointerEvents: 'none', zIndex: 1,
       }} />
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 2 }}>
+      <div id="assist-wrap" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 2 }}>
 
         {/* Label */}
-        <div style={{ textAlign: 'center', marginBottom: 72 }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          style={{ textAlign: 'center', marginBottom: 72 }}
+        >
           <span style={{
             display: 'inline-block',
             fontFamily: 'var(--font-barlow)', fontWeight: 600,
@@ -33,7 +42,7 @@ export default function AssistanceSection() {
           }}>
             Assistência Técnica
           </h2>
-        </div>
+        </motion.div>
 
         {/* Main time display */}
         <div className="time-grid" style={{
@@ -41,12 +50,18 @@ export default function AssistanceSection() {
           gap: 0, alignItems: 'center', marginBottom: 56,
         }}>
 
-          {/* Left info */}
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            padding: '48px 40px',
-          }}>
+          {/* Left info — slides from left */}
+          <motion.div
+            variants={fadeRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.4 }}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              padding: '48px 40px',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
               <div style={{
                 width: 48, height: 48,
@@ -62,7 +77,7 @@ export default function AssistanceSection() {
                 Atendimento
               </span>
             </div>
-            <div style={{
+            <div className="assist-time-value" style={{
               fontFamily: 'var(--font-barlow)', fontWeight: 900,
               fontSize: 72, color: '#FFCB08', lineHeight: 1,
               marginBottom: 8, letterSpacing: '-0.02em',
@@ -73,13 +88,20 @@ export default function AssistanceSection() {
               Todos os dias da semana<br/>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Segunda a Sábado</span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Center divider */}
-          <div className="center-divider" style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '0 40px',
-          }}>
+          {/* Center divider — fades in */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.5 }}
+            className="center-divider"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: '0 40px',
+            }}
+          >
             <div style={{ width: 1, height: 60, background: 'linear-gradient(to bottom, transparent, rgba(255,203,8,0.4))' }} />
             <div style={{
               width: 40, height: 40, border: '1px solid rgba(255,203,8,0.3)',
@@ -89,14 +111,20 @@ export default function AssistanceSection() {
               <span style={{ fontFamily: 'var(--font-barlow)', fontWeight: 900, fontSize: 12, color: '#FFCB08', letterSpacing: '0.1em' }}>+</span>
             </div>
             <div style={{ width: 1, height: 60, background: 'linear-gradient(to top, transparent, rgba(255,203,8,0.4))' }} />
-          </div>
+          </motion.div>
 
-          {/* Right info */}
-          <div style={{
-            backgroundColor: 'rgba(255,203,8,0.06)',
-            border: '1px solid rgba(255,203,8,0.2)',
-            padding: '48px 40px',
-          }}>
+          {/* Right info — slides from right */}
+          <motion.div
+            variants={fadeLeft}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.4 }}
+            style={{
+              backgroundColor: 'rgba(255,203,8,0.06)',
+              border: '1px solid rgba(255,203,8,0.2)',
+              padding: '48px 40px',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
               <div style={{
                 width: 48, height: 48,
@@ -112,7 +140,7 @@ export default function AssistanceSection() {
                 Plantão
               </span>
             </div>
-            <div style={{
+            <div className="assist-time-value" style={{
               fontFamily: 'var(--font-barlow)', fontWeight: 900,
               fontSize: 72, color: '#ffffff', lineHeight: 1,
               marginBottom: 8, letterSpacing: '-0.02em',
@@ -123,18 +151,25 @@ export default function AssistanceSection() {
               E <strong style={{ color: '#FFCB08' }}>Feriados</strong><br/>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Plantão especializado disponível</span>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Notice */}
-        <div style={{
-          display: 'flex', alignItems: 'flex-start', gap: 20,
-          backgroundColor: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderLeft: '3px solid rgba(255,203,8,0.6)',
-          padding: '24px 28px',
-          maxWidth: 720, margin: '0 auto',
-        }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.6 }}
+          className="notice-box"
+          style={{
+            display: 'flex', alignItems: 'flex-start', gap: 20,
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderLeft: '3px solid rgba(255,203,8,0.6)',
+            padding: '24px 28px',
+            maxWidth: 720, margin: '0 auto',
+          }}
+        >
           <div style={{ flexShrink: 0, marginTop: 2 }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFCB08" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
@@ -147,7 +182,7 @@ export default function AssistanceSection() {
               em equipamentos e máquinas adquiridos através da PENATEC. Consulte nossa equipe para mais informações.
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <style>{`
@@ -159,7 +194,11 @@ export default function AssistanceSection() {
         }
         @media (max-width: 600px) {
           #assistencia { padding: 72px 0 !important; }
-          #assistencia > div { padding: 0 24px !important; }
+          #assist-wrap { padding: 0 20px !important; }
+          #assistencia .time-grid > div { padding: 32px 24px !important; }
+          #assistencia .assist-time-value { font-size: 52px !important; }
+          #assistencia .time-grid { margin-bottom: 36px !important; }
+          #assistencia .notice-box { padding: 20px 20px !important; }
         }
       `}</style>
     </section>

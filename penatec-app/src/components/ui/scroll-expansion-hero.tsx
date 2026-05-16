@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import Image from 'next/image';
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  animate,
-} from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 
 interface ScrollExpandMediaProps {
   mediaType?: 'video' | 'image';
@@ -37,28 +32,23 @@ const ScrollExpandMedia = ({
   children,
 }: ScrollExpandMediaProps) => {
   const rawProgress = useMotionValue(0);
-
   const [showContent, setShowContent] = useState(false);
   const [isMobileState, setIsMobileState] = useState(false);
 
   const isMobileRef = useRef(false);
   const expandedRef = useRef(false);
-  const isAnimatingRef = useRef(false);
-  const touchStartYRef = useRef(0);
   const viewportWRef = useRef(1440);
 
   useEffect(() => { isMobileRef.current = isMobileState; }, [isMobileState]);
 
   useEffect(() => {
-    animate(rawProgress, 0, { duration: 0 });
+    rawProgress.set(0);
     expandedRef.current = false;
-    isAnimatingRef.current = false;
     setShowContent(false);
   }, [mediaType, rawProgress]);
 
-  // ─── All visual values derived from rawProgress ───────────────────────────
+  // ─── Visual transforms (GPU-composited) ──────────────────────────────────
 
-  // Single MotionValue for clip-path — avoids the 3-value useMotionTemplate overhead
   const clipPath = useTransform(rawProgress, (v) => {
     const y = 22 * (1 - v);
     const x = (isMobileRef.current ? 15 : 33) * (1 - v);
@@ -75,87 +65,103 @@ const ScrollExpandMedia = ({
   });
   const negTextX = useTransform(textTranslatePx, (v) => -v);
 
-  const labelsOpacity = useTransform(rawProgress, [0, 0.5], [1, 0]);
+  const labelsOpacity = useTransform(rawProgress, [0, 0.4], [1, 0]);
+
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Lock body scroll via CSS while collapsed so wheel listeners can be passive.
-  // Passive listeners never block the browser render pipeline — this is the key
-  // to eliminating jank during the animation.
+  // Lock body scroll via CSS while collapsed so listeners can stay passive
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
   useEffect(() => {
-    const expand = () => {
-      if (isAnimatingRef.current || expandedRef.current) return;
-      isAnimatingRef.current = true;
-      animate(rawProgress, 1, {
-        duration: 1.1,
-        ease: [0.16, 1, 0.3, 1],
-        onComplete: () => {
-          expandedRef.current = true;
-          document.body.style.overflow = '';
-          setShowContent(true);
-          isAnimatingRef.current = false;
-        },
-      });
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let animControl: any = null;
+
+    const stopAnim = () => {
+      if (animControl) { animControl.stop(); animControl = null; }
+    };
+
+    // After input stops, spring to nearest 0 or 1
+    const scheduleSettle = () => {
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        const p = rawProgress.get();
+        stopAnim();
+        if (p >= 0.45) {
+          animControl = animate(rawProgress, 1, {
+            type: 'spring', stiffness: 260, damping: 30,
+            onComplete: () => {
+              expandedRef.current = true;
+              document.body.style.overflow = '';
+              setShowContent(true);
+              animControl = null;
+            },
+          });
+        } else {
+          animControl = animate(rawProgress, 0, {
+            type: 'spring', stiffness: 280, damping: 32,
+            onComplete: () => { animControl = null; },
+          });
+        }
+      }, 130);
+    };
+
+    const addProgress = (delta: number, sensitivity: number) => {
+      stopAnim();
+      const next = Math.min(Math.max(rawProgress.get() + delta * sensitivity, 0), 1);
+      rawProgress.set(next);
+      scheduleSettle();
     };
 
     const collapse = () => {
-      if (isAnimatingRef.current || !expandedRef.current) return;
-      isAnimatingRef.current = true;
       expandedRef.current = false;
       document.body.style.overflow = 'hidden';
       setShowContent(false);
-      animate(rawProgress, 0, {
-        type: 'spring',
-        stiffness: 200,
-        damping: 30,
-        onComplete: () => {
-          isAnimatingRef.current = false;
-        },
+      stopAnim();
+      animControl = animate(rawProgress, 0, {
+        type: 'spring', stiffness: 200, damping: 28,
+        onComplete: () => { animControl = null; },
       });
     };
 
     const handleWheel = (e: WheelEvent) => {
-      if (isAnimatingRef.current) return;
       if (expandedRef.current) {
-        if (e.deltaY < 0 && window.scrollY <= 5) collapse();
-      } else {
-        if (e.deltaY > 5) expand();
+        if (e.deltaY < -5 && window.scrollY <= 5) collapse();
+        return;
       }
+      addProgress(e.deltaY, 0.0018);
     };
 
+    let touchStartY = 0;
+
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartYRef.current = e.touches[0].clientY;
+      touchStartY = e.touches[0].clientY;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!touchStartYRef.current || isAnimatingRef.current) return;
-      const delta = touchStartYRef.current - e.touches[0].clientY;
-      if (expandedRef.current) {
-        if (delta < -30 && window.scrollY <= 5) {
-          collapse();
-          touchStartYRef.current = 0;
-        }
-      } else {
-        if (delta > 30) {
-          expand();
-          touchStartYRef.current = 0;
-        }
-      }
+      if (expandedRef.current) return;
+      if (!touchStartY) return;
+      const delta = touchStartY - e.touches[0].clientY;
+      touchStartY = e.touches[0].clientY;
+      addProgress(delta, 0.007);
     };
 
-    const handleTouchEnd = () => { touchStartYRef.current = 0; };
+    const handleTouchEnd = () => {
+      touchStartY = 0;
+      if (!expandedRef.current) scheduleSettle();
+    };
 
-    // All passive — scroll is blocked by CSS (body overflow:hidden), not JS
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
+      if (settleTimer) clearTimeout(settleTimer);
+      stopAnim();
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
@@ -165,10 +171,9 @@ const ScrollExpandMedia = ({
 
   useEffect(() => {
     const sync = () => {
-      const mobile = window.innerWidth < 768;
-      isMobileRef.current = mobile;
+      isMobileRef.current = window.innerWidth < 768;
       viewportWRef.current = window.innerWidth;
-      setIsMobileState(mobile);
+      setIsMobileState(window.innerWidth < 768);
     };
     sync();
     window.addEventListener('resize', sync);
@@ -196,7 +201,7 @@ const ScrollExpandMedia = ({
           <div className='absolute inset-0' style={{ backgroundColor: 'rgba(23,35,58,0.55)' }} />
         </motion.div>
 
-        {/* Video — clip-path reveals from center, GPU compositor layer */}
+        {/* Video — clip-path expands from center, GPU layer */}
         <motion.div
           className='absolute inset-0 z-10'
           style={{ clipPath, willChange: 'clip-path' }}
@@ -271,7 +276,7 @@ const ScrollExpandMedia = ({
           )}
         </motion.div>
 
-        {/* Text — z-20, always above the clipped video */}
+        {/* Text — z-20, always above clipped video */}
         <div
           className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 ${
             textBlend ? 'mix-blend-difference' : ''

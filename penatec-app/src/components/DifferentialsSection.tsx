@@ -1,5 +1,9 @@
 'use client'
 
+import { useState, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { fadeUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
+
 const CARDS = [
   {
     icon: (
@@ -66,13 +70,48 @@ const CARDS = [
   },
 ]
 
+const cardVariant = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] } },
+}
+
 export default function DifferentialsSection() {
+  const [activeCard, setActiveCard] = useState(0)
+  const carouselRef = useRef<HTMLDivElement>(null)
+
+  const onCarouselScroll = useCallback(() => {
+    const el = carouselRef.current
+    if (!el) return
+    const containerRect = el.getBoundingClientRect()
+    let closestIdx = 0
+    let minDist = Infinity
+    Array.from(el.children).forEach((child, idx) => {
+      const dist = Math.abs(child.getBoundingClientRect().left - containerRect.left)
+      if (dist < minDist) { minDist = dist; closestIdx = idx }
+    })
+    setActiveCard(closestIdx)
+  }, [])
+
+  const scrollToCard = useCallback((idx: number) => {
+    const el = carouselRef.current
+    if (!el) return
+    const card = el.children[idx] as HTMLElement
+    if (card) el.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
+  }, [])
+
   return (
     <section id="diferenciais" style={{ backgroundColor: '#F4F6FA', padding: '120px 0' }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
+      <div className="diff-container" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
 
         {/* Header */}
-        <div style={{ maxWidth: 640, marginBottom: 64 }}>
+        <motion.div
+          className="diff-header"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          style={{ maxWidth: 640, marginBottom: 64 }}
+        >
           <span style={{
             display: 'inline-block',
             fontFamily: 'var(--font-barlow)', fontWeight: 600,
@@ -98,18 +137,26 @@ export default function DifferentialsSection() {
             Décadas de experiência traduzidas em qualidade, confiança e suporte técnico
             que vai além do esperado.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Cards grid */}
-        <div className="cards-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 2,
-          backgroundColor: '#E8EBF0',
-        }}>
+        {/* Cards grid — staggered */}
+        <motion.div
+          className="cards-grid"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.05 }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 2,
+            backgroundColor: '#E8EBF0',
+          }}
+        >
           {CARDS.map((card, i) => (
-            <div
+            <motion.div
               key={i}
+              variants={cardVariant}
               style={{
                 backgroundColor: '#ffffff',
                 padding: '40px 36px',
@@ -190,19 +237,105 @@ export default function DifferentialsSection() {
               >
                 {card.desc}
               </p>
-            </div>
+            </motion.div>
           ))}
+        </motion.div>
+        {/* Mobile carousel */}
+        <div className="diff-mobile-carousel">
+          <div
+            ref={carouselRef}
+            className="diff-carousel-track"
+            onScroll={onCarouselScroll}
+          >
+            {CARDS.map((card, i) => (
+              <div
+                key={i}
+                className="diff-carousel-card"
+                style={{
+                  backgroundColor: '#ffffff',
+                  padding: '32px 28px',
+                  position: 'relative',
+                  flex: '0 0 82vw',
+                  maxWidth: 320,
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 20, right: 24,
+                  fontFamily: 'var(--font-barlow)', fontWeight: 900,
+                  fontSize: 64, color: 'rgba(31,50,90,0.08)',
+                  lineHeight: 1, userSelect: 'none',
+                }}>
+                  {card.number}
+                </div>
+                <div style={{ color: '#1F325A', marginBottom: 20 }}>
+                  {card.icon}
+                </div>
+                <div style={{ width: 32, height: 3, backgroundColor: '#FFCB08', marginBottom: 16 }} />
+                <h3 style={{
+                  fontFamily: 'var(--font-barlow)', fontWeight: 800,
+                  fontSize: 20, color: '#17233A',
+                  letterSpacing: '-0.01em', marginBottom: 10, lineHeight: 1.2,
+                }}>
+                  {card.title}
+                </h3>
+                <p style={{
+                  fontFamily: 'var(--font-inter)', fontSize: 14,
+                  color: '#6B7280', lineHeight: 1.7,
+                }}>
+                  {card.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 20 }}>
+            {CARDS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToCard(i)}
+                aria-label={`Card ${i + 1} de ${CARDS.length}`}
+                style={{
+                  width: activeCard === i ? 20 : 6,
+                  height: 6,
+                  backgroundColor: activeCard === i ? '#FFCB08' : 'rgba(31,50,90,0.2)',
+                  border: 'none',
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'width 0.3s ease, background-color 0.3s ease',
+                  flexShrink: 0,
+                }}
+              />
+            ))}
+          </div>
         </div>
+
       </div>
 
       <style>{`
+        .diff-mobile-carousel { display: none; }
+        .diff-carousel-track {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          gap: 12px;
+          padding: 0 24px;
+          scroll-padding-left: 24px;
+        }
+        .diff-carousel-track::-webkit-scrollbar { display: none; }
+        .diff-carousel-card { scroll-snap-align: start; }
+
         @media (max-width: 1024px) {
           #diferenciais .cards-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 640px) {
           #diferenciais { padding: 72px 0 !important; }
-          #diferenciais > div { padding: 0 24px !important; }
-          #diferenciais .cards-grid { grid-template-columns: 1fr !important; }
+          .diff-container { padding: 0 !important; }
+          .diff-header { padding: 0 24px; margin-bottom: 40px !important; }
+          #diferenciais .cards-grid { display: none !important; }
+          .diff-mobile-carousel { display: block; }
         }
       `}</style>
     </section>

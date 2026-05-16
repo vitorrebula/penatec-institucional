@@ -1,5 +1,9 @@
 'use client'
 
+import { useRef, useEffect, useState } from 'react'
+import { motion, useInView, animate } from 'framer-motion'
+import { fadeUp, fadeLeft, fadeRight, scaleUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
+
 const TIMELINE = [
   { year: '1970s', title: 'Fundação', desc: 'Início das operações com foco em qualidade e confiança no mercado regional.' },
   { year: '1990s', title: 'Expansão', desc: 'Crescimento das operações e ampliação do portfólio de produtos e serviços.' },
@@ -8,22 +12,37 @@ const TIMELINE = [
 ]
 
 const NUMBERS = [
-  { value: '+50', label: 'Anos de mercado', dark: true },
-  { value: '100%', label: 'Foco no cliente', dark: false },
-  { value: '6d/sem', label: 'Assistência ativa', dark: false },
+  { to: 50, prefix: '+', suffix: '', label: 'Anos de mercado', dark: true },
+  { to: 100, prefix: '', suffix: '%', label: 'Foco no cliente', dark: false },
+  { to: 6, prefix: '', suffix: 'd/sem', label: 'Assistência ativa', dark: false },
 ]
 
-/* Mock industrial photo — simulates a factory environment */
+function CountStat({ to, prefix, suffix, isVisible }: { to: number; prefix: string; suffix: string; isVisible: boolean }) {
+  const spanRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (!isVisible) return
+    const ctrl = animate(0, to, {
+      duration: 1.4,
+      ease: 'easeOut',
+      onUpdate(v) {
+        if (spanRef.current) spanRef.current.textContent = prefix + Math.round(v) + suffix
+      },
+    })
+    return ctrl.stop
+  }, [isVisible, to, prefix, suffix])
+
+  return <span ref={spanRef}>{prefix}0{suffix}</span>
+}
+
 function IndustrialPhotoMock({ label }: { label: string }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-      {/* Base gradient — dark industrial palette */}
       <div style={{
         position: 'absolute', inset: 0,
         background: 'linear-gradient(135deg, #0a111c 0%, #17233A 30%, #1F325A 60%, #0F1924 100%)',
       }} />
 
-      {/* Abstract industrial structure SVG */}
       <svg
         aria-hidden="true"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
@@ -31,37 +50,28 @@ function IndustrialPhotoMock({ label }: { label: string }) {
         preserveAspectRatio="xMidYMid slice"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Factory floor lines */}
         <line x1="0" y1="420" x2="400" y2="420" stroke="rgba(255,203,8,0.2)" strokeWidth="1" />
-        {/* Vertical columns */}
         <rect x="40" y="100" width="12" height="320" fill="rgba(255,203,8,0.08)" />
         <rect x="180" y="80" width="14" height="340" fill="rgba(255,203,8,0.1)" />
         <rect x="348" y="120" width="12" height="300" fill="rgba(255,203,8,0.07)" />
-        {/* Horizontal beams */}
         <rect x="40" y="100" width="320" height="8" fill="rgba(255,203,8,0.12)" />
         <rect x="40" y="220" width="320" height="6" fill="rgba(255,203,8,0.07)" />
-        {/* Diagonal brace */}
         <line x1="40" y1="108" x2="180" y2="220" stroke="rgba(255,203,8,0.1)" strokeWidth="2" />
         <line x1="180" y1="108" x2="360" y2="220" stroke="rgba(255,203,8,0.1)" strokeWidth="2" />
-        {/* Machine silhouette */}
         <rect x="80" y="280" width="100" height="140" rx="2" fill="rgba(31,50,90,0.6)" stroke="rgba(255,203,8,0.15)" strokeWidth="1" />
         <rect x="95" y="295" width="70" height="50" rx="1" fill="rgba(255,203,8,0.08)" />
         <circle cx="130" cy="370" r="25" fill="none" stroke="rgba(255,203,8,0.2)" strokeWidth="2" />
         <circle cx="130" cy="370" r="12" fill="rgba(255,203,8,0.1)" />
-        {/* Second machine */}
         <rect x="220" y="300" width="120" height="120" rx="2" fill="rgba(31,50,90,0.5)" stroke="rgba(255,203,8,0.12)" strokeWidth="1" />
         <rect x="235" y="315" width="90" height="40" fill="rgba(255,203,8,0.06)" />
         <rect x="250" y="368" width="60" height="8" fill="rgba(255,203,8,0.15)" />
         <rect x="250" y="385" width="60" height="8" fill="rgba(255,203,8,0.1)" />
-        {/* Ceiling pipe */}
         <rect x="0" y="55" width="400" height="18" fill="rgba(255,203,8,0.06)" />
         <circle cx="70" cy="64" r="10" fill="none" stroke="rgba(255,203,8,0.2)" strokeWidth="2" />
         <circle cx="200" cy="64" r="10" fill="none" stroke="rgba(255,203,8,0.2)" strokeWidth="2" />
         <circle cx="330" cy="64" r="10" fill="none" stroke="rgba(255,203,8,0.2)" strokeWidth="2" />
-        {/* Light beams from ceiling */}
         <polygon points="70,73 45,240 95,240" fill="rgba(255,203,8,0.025)" />
         <polygon points="200,73 170,320 230,320" fill="rgba(255,203,8,0.03)" />
-        {/* Grid floor dots */}
         {[0,1,2,3,4,5].map(col =>
           [0,1,2].map(row => (
             <circle key={`${col}-${row}`} cx={col * 70 + 20} cy={row * 15 + 430} r="1.5" fill="rgba(255,203,8,0.2)" />
@@ -69,13 +79,11 @@ function IndustrialPhotoMock({ label }: { label: string }) {
         )}
       </svg>
 
-      {/* Gradient overlay for readability */}
       <div style={{
         position: 'absolute', inset: 0,
         background: 'linear-gradient(to top, rgba(10,17,28,0.7) 0%, transparent 60%)',
       }} />
 
-      {/* Photo label */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: '20px 24px',
@@ -101,12 +109,21 @@ function IndustrialPhotoMock({ label }: { label: string }) {
 }
 
 export default function AboutSection() {
+  const statsRef = useRef<HTMLDivElement>(null)
+  const statsInView = useInView(statsRef, { once: true, amount: 0.5 })
+
   return (
     <section id="sobre" style={{ backgroundColor: '#ffffff', padding: '120px 0' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
 
         {/* Section label */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 72 }}>
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 72 }}
+        >
           <div style={{ width: 3, height: 40, backgroundColor: '#FFCB08' }} />
           <div>
             <span style={{
@@ -121,13 +138,19 @@ export default function AboutSection() {
               color: '#17233A', lineHeight: 1.05, letterSpacing: '-0.01em',
             }}>Sobre a PENATEC</h2>
           </div>
-        </div>
+        </motion.div>
 
         {/* Three-column: text | mock photo | timeline */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px 1fr', gap: 56, alignItems: 'start' }}>
 
           {/* LEFT — story + numbers */}
-          <div>
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.65, ease: EASE_EXPO, delay: 0.1 }}
+          >
             <p style={{ fontFamily: 'var(--font-inter)', fontSize: 18, lineHeight: 1.8, color: '#374151', marginBottom: 24 }}>
               Há mais de cinco décadas, a <strong style={{ color: '#1F325A' }}>PENATEC</strong> constrói
               uma trajetória baseada em confiança, excelência e compromisso com os resultados dos clientes.
@@ -143,10 +166,14 @@ export default function AboutSection() {
             </p>
 
             {/* Numbers */}
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 1, marginTop: 48, backgroundColor: '#E8EBF0',
-            }}>
+            <div
+              ref={statsRef}
+              className="about-numbers"
+              style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 1, marginTop: 48, backgroundColor: '#E8EBF0',
+              }}
+            >
               {NUMBERS.map((num, i) => (
                 <div key={i} style={{
                   backgroundColor: num.dark ? '#1F325A' : '#ffffff',
@@ -155,7 +182,9 @@ export default function AboutSection() {
                   <div style={{
                     fontFamily: 'var(--font-barlow)', fontWeight: 900,
                     fontSize: 34, color: num.dark ? '#FFCB08' : '#1F325A', lineHeight: 1,
-                  }}>{num.value}</div>
+                  }}>
+                    <CountStat to={num.to} prefix={num.prefix} suffix={num.suffix} isVisible={statsInView} />
+                  </div>
                   <div style={{
                     fontFamily: 'var(--font-inter)', fontSize: 11,
                     color: num.dark ? 'rgba(255,255,255,0.5)' : '#6B7280',
@@ -164,15 +193,28 @@ export default function AboutSection() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* CENTER — industrial mock photo */}
-          <div style={{ height: 520, overflow: 'hidden', flexShrink: 0 }}>
+          <motion.div
+            variants={scaleUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: EASE_EXPO, delay: 0.15 }}
+            style={{ height: 520, overflow: 'hidden', flexShrink: 0 }}
+          >
             <IndustrialPhotoMock label="Instalações PENATEC" />
-          </div>
+          </motion.div>
 
           {/* RIGHT — timeline */}
-          <div style={{ paddingTop: 4 }}>
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            style={{ paddingTop: 4 }}
+          >
             <div style={{ position: 'relative', paddingLeft: 32 }}>
               <div style={{
                 position: 'absolute', left: 6, top: 10,
@@ -180,7 +222,11 @@ export default function AboutSection() {
                 background: 'linear-gradient(to bottom, #FFCB08, rgba(255,203,8,0.1))',
               }} />
               {TIMELINE.map((item, i) => (
-                <div key={i} style={{ position: 'relative', marginBottom: i < TIMELINE.length - 1 ? 44 : 0 }}>
+                <motion.div
+                  key={i}
+                  variants={fadeLeft}
+                  style={{ position: 'relative', marginBottom: i < TIMELINE.length - 1 ? 44 : 0 }}
+                >
                   <div style={{
                     position: 'absolute', left: -32, top: 4,
                     width: 14, height: 14, borderRadius: '50%',
@@ -201,10 +247,10 @@ export default function AboutSection() {
                     fontFamily: 'var(--font-inter)', fontSize: 14,
                     color: '#6B7280', lineHeight: 1.65,
                   }}>{item.desc}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </div>
@@ -218,6 +264,11 @@ export default function AboutSection() {
           #sobre { padding: 72px 0 !important; }
           #sobre > div { padding: 0 24px !important; }
           #sobre > div > div:last-child { grid-template-columns: 1fr !important; }
+          #sobre > div > div:first-child { margin-bottom: 40px !important; }
+        }
+        @media (max-width: 400px) {
+          #sobre .about-numbers { grid-template-columns: 1fr !important; }
+          #sobre .about-numbers > div { padding: 20px 16px !important; }
         }
       `}</style>
     </section>

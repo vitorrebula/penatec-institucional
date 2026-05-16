@@ -1,11 +1,19 @@
 'use client'
 
+import { motion } from 'framer-motion'
+import { fadeUp, fadeLeft, fadeRight, staggerContainer, EASE_EXPO } from '@/lib/animations'
+
 const BENEFITS = [
   { label: 'Otimização de uso dos produtos', desc: 'Orientação técnica para extrair o máximo desempenho.' },
   { label: 'Redução de custos de manutenção', desc: 'Diagnóstico preventivo que evita gastos desnecessários.' },
   { label: 'Aumento de produtividade', desc: 'Processos mais eficientes com o suporte certo.' },
   { label: 'Atendimento personalizado', desc: 'Cada cliente recebe atenção específica para sua realidade.' },
 ]
+
+const benefitItem = {
+  hidden: { opacity: 0, x: 20 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] } },
+}
 
 export default function AdvisorySection() {
   return (
@@ -30,9 +38,14 @@ export default function AdvisorySection() {
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 96, alignItems: 'center' }}>
 
-          {/* Left — visual panel */}
-          <div>
-            <div style={{
+          {/* Left — visual panel (slides in from left) */}
+          <motion.div
+            variants={fadeRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            <div className="advisory-panel" style={{
               backgroundColor: '#1F325A',
               padding: '56px 48px',
               position: 'relative',
@@ -54,7 +67,7 @@ export default function AdvisorySection() {
                   </svg>
                 </div>
 
-                <blockquote style={{
+                <blockquote className="advisory-quote" style={{
                   fontFamily: 'var(--font-barlow)', fontWeight: 800,
                   fontSize: 28, color: '#ffffff',
                   lineHeight: 1.25, marginBottom: 24,
@@ -79,43 +92,57 @@ export default function AdvisorySection() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Right — content */}
+          {/* Right — content (fades up with staggered benefits) */}
           <div>
-            <span style={{
-              display: 'inline-block',
-              fontFamily: 'var(--font-barlow)', fontWeight: 600,
-              fontSize: 11, letterSpacing: '0.35em', textTransform: 'uppercase',
-              color: '#FFCB08', marginBottom: 16,
-              paddingLeft: 20, borderLeft: '3px solid #FFCB08',
-            }}>
-              Assessoria Técnica
-            </span>
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+            >
+              <span style={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-barlow)', fontWeight: 600,
+                fontSize: 11, letterSpacing: '0.35em', textTransform: 'uppercase',
+                color: '#FFCB08', marginBottom: 16,
+                paddingLeft: 20, borderLeft: '3px solid #FFCB08',
+              }}>
+                Assessoria Técnica
+              </span>
 
-            <h2 style={{
-              fontFamily: 'var(--font-barlow)', fontWeight: 900,
-              fontSize: 'clamp(32px, 3.5vw, 50px)',
-              color: '#17233A', lineHeight: 1.05,
-              letterSpacing: '-0.01em', marginBottom: 20, marginTop: 12,
-            }}>
-              Assessoria Técnica Especializada
-            </h2>
+              <h2 style={{
+                fontFamily: 'var(--font-barlow)', fontWeight: 900,
+                fontSize: 'clamp(32px, 3.5vw, 50px)',
+                color: '#17233A', lineHeight: 1.05,
+                letterSpacing: '-0.01em', marginBottom: 20, marginTop: 12,
+              }}>
+                Assessoria Técnica Especializada
+              </h2>
 
-            <p style={{
-              fontFamily: 'var(--font-inter)', fontSize: 17, lineHeight: 1.75,
-              color: '#4B5563', marginBottom: 40,
-            }}>
-              Clientes PENATEC contam com assessoria especializada para otimizar o uso de nossos
-              produtos, economizar em manutenções e aprimorar sua produção. Nossa equipe técnica
-              está preparada para ser seu parceiro estratégico.
-            </p>
+              <p style={{
+                fontFamily: 'var(--font-inter)', fontSize: 17, lineHeight: 1.75,
+                color: '#4B5563', marginBottom: 40,
+              }}>
+                Clientes PENATEC contam com assessoria especializada para otimizar o uso de nossos
+                produtos, economizar em manutenções e aprimorar sua produção. Nossa equipe técnica
+                está preparada para ser seu parceiro estratégico.
+              </p>
+            </motion.div>
 
-            {/* Benefits list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {/* Benefits list — staggered */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 0 }}
+            >
               {BENEFITS.map((benefit, i) => (
-                <div
+                <motion.div
                   key={i}
+                  variants={benefitItem}
                   style={{
                     display: 'flex', gap: 20, alignItems: 'flex-start',
                     padding: '20px 0',
@@ -143,9 +170,9 @@ export default function AdvisorySection() {
                       {benefit.desc}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -157,6 +184,8 @@ export default function AdvisorySection() {
         @media (max-width: 600px) {
           #assessoria { padding: 72px 0 !important; }
           #assessoria > div { padding: 0 24px !important; }
+          #assessoria .advisory-panel { padding: 36px 28px !important; }
+          #assessoria .advisory-quote { font-size: 22px !important; }
         }
       `}</style>
     </section>
