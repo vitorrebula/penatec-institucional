@@ -2,18 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 
 const NAV_ITEMS = [
   { label: 'Início', href: '#inicio' },
   { label: 'Sobre', href: '#sobre' },
   { label: 'Diferenciais', href: '#diferenciais' },
   { label: 'Assistência Técnica', href: '#assistencia' },
+  { label: 'Produtos', href: '/produtos' },
   { label: 'Contato', href: '#contato' },
 ]
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const router = useRouter()
+  const isHome = pathname === '/'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -21,10 +27,18 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const scrollTo = (href: string) => {
+  const handleNav = (href: string) => {
     setMenuOpen(false)
-    const el = document.querySelector(href)
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
+    if (href.startsWith('/')) {
+      router.push(href)
+      return
+    }
+    if (isHome) {
+      const el = document.querySelector(href)
+      if (el) el.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      router.push(`/${href}`)
+    }
   }
 
   return (
@@ -43,7 +57,7 @@ export default function Header() {
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
         {/* Logo */}
-        <button onClick={() => scrollTo('#inicio')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image
             src="/logo_penatecsombraespalhada-1-1.png"
             alt="PENATEC"
@@ -52,31 +66,35 @@ export default function Header() {
             style={{ objectFit: 'contain', height: 100, width: 'auto' }}
             priority
           />
-        </button>
+        </Link>
 
         {/* Desktop Nav */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: 36 }} className="hidden-mobile">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.href}
-              onClick={() => scrollTo(item.href)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'rgba(255,255,255,0.72)', fontSize: 14, fontWeight: 500,
-                letterSpacing: '0.04em', transition: 'color 0.2s',
-                fontFamily: 'var(--font-inter)',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.72)')}
-            >
-              {item.label}
-            </button>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const isActive = item.href.startsWith('/') && pathname.startsWith(item.href)
+            return (
+              <button
+                key={item.href}
+                onClick={() => handleNav(item.href)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: isActive ? '#FFCB08' : 'rgba(255,255,255,0.72)',
+                  fontSize: 14, fontWeight: 500,
+                  letterSpacing: '0.04em', transition: 'color 0.2s',
+                  fontFamily: 'var(--font-inter)',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = isActive ? '#FFCB08' : 'rgba(255,255,255,0.72)')}
+              >
+                {item.label}
+              </button>
+            )
+          })}
         </nav>
 
         {/* Desktop CTA */}
         <button
-          onClick={() => scrollTo('#contato')}
+          onClick={() => handleNav('#contato')}
           className="hidden-mobile"
           style={{
             backgroundColor: '#FFCB08', color: '#17233A',
@@ -117,7 +135,7 @@ export default function Header() {
           {NAV_ITEMS.map(item => (
             <button
               key={item.href}
-              onClick={() => scrollTo(item.href)}
+              onClick={() => handleNav(item.href)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
                 color: 'rgba(255,255,255,0.8)', fontSize: 16, fontWeight: 500,
@@ -129,7 +147,7 @@ export default function Header() {
             </button>
           ))}
           <button
-            onClick={() => scrollTo('#contato')}
+            onClick={() => handleNav('#contato')}
             style={{
               marginTop: 12, backgroundColor: '#FFCB08', color: '#17233A',
               border: 'none', cursor: 'pointer',

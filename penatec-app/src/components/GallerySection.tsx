@@ -2,7 +2,9 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { fadeUp, scaleUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
+import Link from 'next/link'
+import { fadeUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
+import { ALL_ITEMS } from '@/lib/products'
 
 interface MockPhotoProps {
   variant: 'dark-blue' | 'graphite' | 'deep-navy' | 'steel' | 'warm-dark' | 'industrial'
@@ -97,16 +99,13 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
   )
 }
 
-const GALLERY_ALL = [
-  { variant: 'dark-blue'  as const, label: 'Equipamentos Industriais',  category: 'Linha Principal'  },
-  { variant: 'graphite'   as const, label: 'Ferramentas Especializadas', category: 'Linha Técnica'    },
-  { variant: 'steel'      as const, label: 'Sistemas de Manutenção',     category: 'Linha Premium'    },
-  { variant: 'warm-dark'  as const, label: 'Peças e Componentes',        category: 'Linha Industrial' },
-  { variant: 'industrial' as const, label: 'Soluções Personalizadas',    category: 'Sob Demanda'      },
-  { variant: 'deep-navy'  as const, label: 'Assistência Técnica',        category: 'Suporte On-site'  },
-  { variant: 'graphite'   as const, label: 'Consultoria Técnica',        category: 'Assessoria'       },
-  { variant: 'dark-blue'  as const, label: 'Manutenção Preventiva',      category: 'Serviços'         },
-]
+const GALLERY_ALL = ALL_ITEMS.filter(i => i.destaque)
+
+function itemHref(item: (typeof GALLERY_ALL)[number]) {
+  return item.tab === 'maquinas'
+    ? `/produtos/maquinas/${item.id}#especificacoes`
+    : `/produtos/${item.id}#especificacoes`
+}
 
 /* Stagger child variant for individual grid cells */
 const gridItem = {
@@ -185,42 +184,34 @@ export default function GallerySection() {
           viewport={{ once: true, amount: 0.1 }}
           style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 3 }}
         >
-          <motion.div variants={gridItem} style={{ gridRow: '1 / 3' }}>
-            <MockPhoto variant="dark-blue" label="Equipamentos Industriais" category="Linha Principal" tall />
-          </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="graphite" label="Ferramentas Especializadas" category="Linha Técnica" />
-          </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="steel" label="Sistemas de Manutenção" category="Linha Premium" />
-          </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="warm-dark" label="Peças e Componentes" category="Linha Industrial" />
-          </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="industrial" label="Soluções Personalizadas" category="Sob Demanda" />
-          </motion.div>
+          {GALLERY_ALL.slice(0, 5).map((item, i) => (
+            <motion.div key={item.id} variants={gridItem} style={i === 0 ? { gridRow: '1 / 3' } : undefined}>
+              <Link href={itemHref(item)} style={{ display: 'block', height: i === 0 ? '100%' : 'auto' }}>
+                <MockPhoto variant={item.variant} label={item.name} category={item.category} tall={i === 0} />
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* Bottom row — staggered */}
-        <motion.div
-          className="gallery-bento"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, marginTop: 3 }}
-        >
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="deep-navy" label="Assistência Técnica" category="Suporte On-site" />
+        {GALLERY_ALL.length > 5 && (
+          <motion.div
+            className="gallery-bento"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, marginTop: 3 }}
+          >
+            {GALLERY_ALL.slice(5).map(item => (
+              <motion.div key={item.id} variants={gridItem}>
+                <Link href={itemHref(item)} style={{ display: 'block' }}>
+                  <MockPhoto variant={item.variant} label={item.name} category={item.category} />
+                </Link>
+              </motion.div>
+            ))}
           </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="graphite" label="Consultoria Técnica" category="Assessoria" />
-          </motion.div>
-          <motion.div variants={gridItem}>
-            <MockPhoto variant="dark-blue" label="Manutenção Preventiva" category="Serviços" />
-          </motion.div>
-        </motion.div>
+        )}
 
         {/* Mobile carousel */}
         <div className="gallery-mobile-carousel">
@@ -231,7 +222,9 @@ export default function GallerySection() {
           >
             {GALLERY_ALL.map((item, i) => (
               <div key={i} className="gallery-carousel-card" style={{ flex: '0 0 82vw', maxWidth: 320 }}>
-                <MockPhoto variant={item.variant} label={item.label} category={item.category} />
+                <Link href={itemHref(item)} style={{ display: 'block' }}>
+                  <MockPhoto variant={item.variant} label={item.name} category={item.category} />
+                </Link>
               </div>
             ))}
           </div>
@@ -266,27 +259,24 @@ export default function GallerySection() {
           viewport={{ once: true, amount: 0.8 }}
           style={{ textAlign: 'center', marginTop: 56 }}
         >
-          <button
-            onClick={() => {
-              const el = document.querySelector('#contato')
-              if (el) el.scrollIntoView({ behavior: 'smooth' })
-            }}
+          <Link
+            href="/produtos"
             style={{
               backgroundColor: '#1F325A', color: '#ffffff',
-              border: 'none', cursor: 'pointer',
+              textDecoration: 'none',
               padding: '14px 40px', fontSize: 13, fontWeight: 800,
               fontFamily: 'var(--font-barlow)', letterSpacing: '0.08em', textTransform: 'uppercase',
               transition: 'background-color 0.2s, transform 0.2s',
               display: 'inline-flex', alignItems: 'center', gap: 10,
             }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FFCB08'; e.currentTarget.style.color = '#17233A' }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#1F325A'; e.currentTarget.style.color = '#ffffff' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#FFCB08'; (e.currentTarget as HTMLAnchorElement).style.color = '#17233A' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#1F325A'; (e.currentTarget as HTMLAnchorElement).style.color = '#ffffff' }}
           >
             Ver Portfólio Completo
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
             </svg>
-          </button>
+          </Link>
         </motion.div>
       </div>
 
