@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import type { Product, ProductInsert, ProductUpdate, ProductTab, ProductVariant } from '@/lib/types'
+import type { Product, ProductInsert, ProductUpdate, ProductTab, ProductVariant, GalleryImage } from '@/lib/types'
 
 const TABS: { value: ProductTab; label: string }[] = [
   { value: 'produtos', label: 'Produto' },
@@ -45,6 +45,14 @@ export default function ProductForm({ product }: Props) {
   const [newImageFile, setNewImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [removeImage, setRemoveImage] = useState(false)
+
+  // Gallery state (máquinas only)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>(product?.gallery_images ?? [])
+  const [galleryUploading, setGalleryUploading] = useState(false)
+
+  // Video state (máquinas only)
+  const [videoUrl, setVideoUrl] = useState(product?.video_url ?? '')
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -100,6 +108,39 @@ export default function ProductForm({ product }: Props) {
     await fetch(`/api/upload?public_id=${encodeURIComponent(public_id)}`, { method: 'DELETE' })
   }
 
+  async function handleGalleryFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    if (galleryImages.length + files.length > 8) {
+      setError('Máximo de 8 imagens na galeria.')
+      return
+    }
+
+    setGalleryUploading(true)
+    setError(null)
+    try {
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          if (!ALLOWED_TYPES.includes(file.type)) throw new Error(`Formato inválido: ${file.name}`)
+          if (file.size > MAX_SIZE_MB * 1024 * 1024) throw new Error(`Arquivo muito grande: ${file.name}`)
+          return uploadImage(file)
+        })
+      )
+      setGalleryImages(prev => [...prev, ...uploaded])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha no upload da galeria.')
+    } finally {
+      setGalleryUploading(false)
+      if (galleryInputRef.current) galleryInputRef.current.value = ''
+    }
+  }
+
+  async function removeGalleryImage(idx: number) {
+    const img = galleryImages[idx]
+    setGalleryImages(prev => prev.filter((_, i) => i !== idx))
+    try { await deleteImage(img.public_id) } catch { /* best-effort */ }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
@@ -146,6 +187,8 @@ export default function ProductForm({ product }: Props) {
         destaque,
         image_url: imageUrl,
         image_public_id: imagePublicId,
+        gallery_images: tab === 'maquinas' ? (galleryImages.length ? galleryImages : null) : null,
+        video_url: tab === 'maquinas' ? (videoUrl.trim() || null) : null,
       }
 
       if (product) {
@@ -532,6 +575,147 @@ export default function ProductForm({ product }: Props) {
           style={{ display: 'none' }}
         />
       </div>
+
+      {/* Galeria de imagens — máquinas only */}
+      {tab === 'maquinas' && (
+        <div className="card">
+          <h2
+            style={{
+              fontFamily: 'var(--font-barlow)',
+              fontWeight: 800,
+              fontSize: 16,
+              color: '#17233A',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              marginBottom: 24,
+              paddingBottom: 16,
+              borderBottom: '1px solid rgba(23,35,58,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ width: 4, height: 18, backgroundColor: '#FFCB08', display: 'inline-block', flexShrink: 0 }} />
+            Galeria de Imagens
+            <span style={{ fontFamily: 'var(--font-inter)', fontWeight: 400, fontSize: 12, color: 'rgba(23,35,58,0.4)', textTransform: 'none', letterSpacing: 0 }}>
+              (máx. 8 fotos)
+            </span>
+          </h2>
+
+          {galleryImages.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {galleryImages.map((img, idx) => (
+                <div key={img.public_id} style={{ position: 'relative', border: '1px solid rgba(23,35,58,0.1)', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', height: 100 }}>
+                    <Image src={img.url} alt={`Galeria ${idx + 1}`} fill style={{ objectFit: 'cover' }} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(idx)}
+                    style={{
+                      position: 'absolute', top: 6, right: 6,
+                      width: 24, height: 24, backgroundColor: 'rgba(220,38,38,0.85)',
+                      border: 'none', cursor: 'pointer', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}
+                    title="Remover imagem"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                  <div style={{
+                    padding: '4px 8px',
+                    fontFamily: 'var(--font-inter)', fontSize: 11,
+                    color: 'rgba(23,35,58,0.45)', textAlign: 'center',
+                  }}>
+                    Foto {idx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {galleryImages.length < 8 && (
+            <div
+              onClick={() => !galleryUploading && galleryInputRef.current?.click()}
+              style={{
+                border: '2px dashed rgba(23,35,58,0.15)',
+                padding: '28px',
+                textAlign: 'center',
+                cursor: galleryUploading ? 'not-allowed' : 'pointer',
+                opacity: galleryUploading ? 0.6 : 1,
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={(e) => { if (!galleryUploading) e.currentTarget.style.borderColor = '#FFCB08' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(23,35,58,0.15)' }}
+            >
+              <svg
+                width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke="rgba(23,35,58,0.25)" strokeWidth="1.5"
+                style={{ margin: '0 auto 10px', display: 'block' }}
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <p style={{ fontFamily: 'var(--font-barlow)', fontWeight: 700, fontSize: 13, color: 'rgba(23,35,58,0.5)', marginBottom: 4 }}>
+                {galleryUploading ? 'Enviando...' : 'Adicionar imagens à galeria'}
+              </p>
+              <p style={{ fontFamily: 'var(--font-inter)', fontSize: 11, color: 'rgba(23,35,58,0.35)' }}>
+                JPG, PNG ou WebP · Máx. {MAX_SIZE_MB} MB · Seleção múltipla permitida
+              </p>
+            </div>
+          )}
+
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept={ALLOWED_TYPES.join(',')}
+            multiple
+            onChange={handleGalleryFileSelect}
+            style={{ display: 'none' }}
+          />
+        </div>
+      )}
+
+      {/* URL do vídeo — máquinas only */}
+      {tab === 'maquinas' && (
+        <div className="card">
+          <h2
+            style={{
+              fontFamily: 'var(--font-barlow)',
+              fontWeight: 800,
+              fontSize: 16,
+              color: '#17233A',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              marginBottom: 24,
+              paddingBottom: 16,
+              borderBottom: '1px solid rgba(23,35,58,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ width: 4, height: 18, backgroundColor: '#FFCB08', display: 'inline-block', flexShrink: 0 }} />
+            Vídeo Demonstrativo
+          </h2>
+
+          <label className="form-label" htmlFor="video_url">URL do vídeo (YouTube)</label>
+          <input
+            id="video_url"
+            type="url"
+            className="form-input"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="Ex: https://www.youtube.com/watch?v=XXXXXXXXXX"
+          />
+          <span style={{ fontFamily: 'var(--font-inter)', fontSize: 11, color: 'rgba(23,35,58,0.35)', marginTop: 6, display: 'block' }}>
+            Cole a URL do YouTube (watch ou youtu.be). A conversão para embed é feita automaticamente.
+          </span>
+        </div>
+      )}
 
       {/* Error */}
       {error && (

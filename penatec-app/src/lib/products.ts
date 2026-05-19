@@ -8,6 +8,11 @@ export type ProductVariant =
   | 'warm-dark'
   | 'industrial'
 
+export interface GalleryImage {
+  url: string
+  public_id: string
+}
+
 export interface Product {
   id: string
   name: string
@@ -19,6 +24,8 @@ export interface Product {
   destaque: boolean
   image_url: string | null
   image_public_id: string | null
+  gallery_images: GalleryImage[] | null
+  video_url: string | null
   created_at: string
   updated_at: string
 }

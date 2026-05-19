@@ -65,7 +65,6 @@ export default function MachinaDetailPage({
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
-  const totalSlides = CAROUSEL_GRADIENTS.length
 
   useEffect(() => {
     fetch(`/api/products/${id}`)
@@ -95,8 +94,24 @@ export default function MachinaDetailPage({
   const extended = EXTENDED_BY_NAME[machine.name]
   const heroGradient = PALETTES[machine.variant]
 
-  const prev = () => setActiveSlide(i => (i - 1 + totalSlides) % totalSlides)
-  const next = () => setActiveSlide(i => (i + 1) % totalSlides)
+  const galleryItems = machine.gallery_images?.length ? machine.gallery_images : null
+  const resolvedTotalSlides = galleryItems ? galleryItems.length : CAROUSEL_GRADIENTS.length
+
+  const prev = () => setActiveSlide(i => (i - 1 + resolvedTotalSlides) % resolvedTotalSlides)
+  const next = () => setActiveSlide(i => (i + 1) % resolvedTotalSlides)
+
+  function toEmbedUrl(url: string): string {
+    try {
+      const u = new URL(url)
+      if (u.hostname === 'youtu.be') {
+        return `https://www.youtube.com/embed${u.pathname}`
+      }
+      if (u.hostname.includes('youtube.com') && u.searchParams.get('v')) {
+        return `https://www.youtube.com/embed/${u.searchParams.get('v')}`
+      }
+    } catch { /* already an embed or invalid */ }
+    return url
+  }
 
   return (
     <>
@@ -417,38 +432,47 @@ export default function MachinaDetailPage({
                 backgroundColor: '#17233A',
                 border: '2px solid rgba(23,35,58,0.1)',
               }}>
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: heroGradient,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexDirection: 'column', gap: 20,
-                }}>
-                  <MachineSVGPattern rotate={5} />
+                {machine.video_url ? (
+                  <iframe
+                    src={toEmbedUrl(machine.video_url)}
+                    title={`Vídeo demonstrativo — ${machine.name}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{
+                      position: 'absolute', inset: 0,
+                      width: '100%', height: '100%',
+                      border: 'none',
+                    }}
+                  />
+                ) : (
                   <div style={{
-                    position: 'relative', zIndex: 1,
-                    width: 72, height: 72,
-                    backgroundColor: '#FFCB08',
+                    position: 'absolute', inset: 0,
+                    background: heroGradient,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 32px rgba(255,203,8,0.35)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                  }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 40px rgba(255,203,8,0.5)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(255,203,8,0.35)' }}
-                  >
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#17233A">
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                  </div>
-                  <p style={{
-                    position: 'relative', zIndex: 1,
-                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                    fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.4)',
+                    flexDirection: 'column', gap: 20,
                   }}>
-                    Vídeo em breve
-                  </p>
-                </div>
+                    <MachineSVGPattern rotate={5} />
+                    <div style={{
+                      position: 'relative', zIndex: 1,
+                      width: 72, height: 72,
+                      backgroundColor: '#FFCB08',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 8px 32px rgba(255,203,8,0.35)',
+                    }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="#17233A">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    </div>
+                    <p style={{
+                      position: 'relative', zIndex: 1,
+                      fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                      fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.4)',
+                    }}>
+                      Vídeo em breve
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -488,7 +512,7 @@ export default function MachinaDetailPage({
                   fontSize: 12, letterSpacing: '0.12em',
                   color: 'rgba(255,255,255,0.35)', marginRight: 8,
                 }}>
-                  {activeSlide + 1} / {totalSlides}
+                  {activeSlide + 1} / {resolvedTotalSlides}
                 </span>
                 <button onClick={prev} aria-label="Imagem anterior" style={{
                   width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.07)',
@@ -530,8 +554,19 @@ export default function MachinaDetailPage({
                   className="maquina-carousel-slide"
                   style={{ position: 'relative', height: 420, overflow: 'hidden' }}
                 >
-                  <div style={{ position: 'absolute', inset: 0, background: CAROUSEL_GRADIENTS[activeSlide] }} />
-                  <MachineSVGPattern rotate={activeSlide * 8} />
+                  {galleryItems ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={galleryItems[activeSlide].url}
+                      alt={`${machine.name} — Foto ${activeSlide + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    <>
+                      <div style={{ position: 'absolute', inset: 0, background: CAROUSEL_GRADIENTS[activeSlide] }} />
+                      <MachineSVGPattern rotate={activeSlide * 8} />
+                    </>
+                  )}
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%',
                     background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)',
@@ -548,7 +583,7 @@ export default function MachinaDetailPage({
               </AnimatePresence>
 
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
-                {CAROUSEL_GRADIENTS.map((_, i) => (
+                {Array.from({ length: resolvedTotalSlides }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveSlide(i)}
