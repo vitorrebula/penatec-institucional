@@ -199,7 +199,7 @@ export default function Footer() {
             © {new Date().getFullYear()} PENATEC. Todos os direitos reservados.
           </span>
           <span style={{ fontFamily: 'var(--font-inter)', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-            Mais de 50 anos de confiança e excelência.
+            Desenvolvido por DevRebula
           </span>
         </div>
       </div>
