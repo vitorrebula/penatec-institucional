@@ -250,7 +250,7 @@ export default function ProductForm({ product }: Props) {
           Informações Básicas
         </h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <label className="form-label" htmlFor="name">Nome do produto *</label>
             <input
@@ -344,7 +344,7 @@ export default function ProductForm({ product }: Props) {
           Configurações Visuais
         </h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div>
             <label className="form-label" htmlFor="variant">Variante de cor</label>
             <select

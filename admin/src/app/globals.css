@@ -14,14 +14,12 @@
   --background: #F4F6FA;
   --foreground: #17233A;
 
-  /* Brand */
   --navy: #17233A;
   --navy-dark: #0F1924;
   --navy-light: #1F325A;
   --yellow: #FFCB08;
   --yellow-muted: rgba(255, 203, 8, 0.15);
 
-  /* Neutrals */
   --border: rgba(23, 35, 58, 0.1);
   --muted: rgba(23, 35, 58, 0.45);
   --surface: #ffffff;
@@ -91,6 +89,10 @@
     transform: translateY(-1px);
   }
 
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
   .btn-secondary {
     display: inline-flex;
     align-items: center;
@@ -105,13 +107,17 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
     text-decoration: none;
   }
 
   .btn-secondary:hover {
     border-color: #17233A;
     color: #17233A;
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.98);
   }
 
   .btn-danger {
@@ -171,5 +177,83 @@
     background-color: #ffffff;
     border: 1px solid rgba(23, 35, 58, 0.08);
     padding: 28px;
+  }
+}
+
+/* ─── Admin Layout ─── */
+
+.admin-layout {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.admin-main {
+  flex: 1;
+  background-color: #F4F6FA;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.admin-page {
+  padding: 36px 40px;
+}
+
+/* ─── Mobile product cards ─── */
+
+.product-mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── Mobile filter tabs: scrollable, no wrap ─── */
+
+.filter-tabs-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 1px;
+}
+
+.filter-tabs-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Card entrance animation ─── */
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Mobile overrides ─── */
+
+@media (max-width: 767px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-page {
+    padding: 20px 16px 32px;
+  }
+
+  .product-table-wrapper {
+    display: none;
+  }
+
+  .product-mobile-cards {
+    display: flex;
+  }
+
+  .form-grid-2col {
+    grid-template-columns: 1fr !important;
   }
 }

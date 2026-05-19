@@ -20,7 +20,7 @@ export default async function EditarProdutoPage({ params }: Props) {
   if (!product) notFound()
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 860 }}>
+    <div className="admin-page" style={{ maxWidth: 860 }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
         <Link

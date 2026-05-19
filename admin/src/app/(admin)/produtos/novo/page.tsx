@@ -5,7 +5,7 @@ import ProductForm from '@/components/ProductForm'
 
 export default function NovoProdutoPage() {
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 860 }}>
+    <div className="admin-page" style={{ maxWidth: 860 }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
         <Link
