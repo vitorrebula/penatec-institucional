@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { fadeUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
-import { type Tab, type Item, ALL_ITEMS } from '@/lib/products'
+import { type Product, type ProductTab } from '@/lib/products'
 
-// ─── Card visual (consistent with GallerySection MockPhoto) ──────────────────
+// ─── Card visual ──────────────────────────────────────────────────────────────
 
 const PALETTES = {
   'dark-blue':  { bg: 'linear-gradient(135deg,#0a1628 0%,#1F325A 60%,#17233A 100%)', accent: '#FFCB08' },
@@ -19,13 +19,13 @@ const PALETTES = {
   'industrial': { bg: 'linear-gradient(160deg,#0d1520 0%,#1F325A 40%,#2a3a52 100%)', accent: '#FFCB08' },
 }
 
-function itemDetailHref(item: Item) {
+function itemDetailHref(item: Product) {
   return item.tab === 'maquinas'
     ? `/produtos/maquinas/${item.id}#especificacoes`
     : `/produtos/${item.id}#especificacoes`
 }
 
-function ItemCard({ item, index }: { item: Item; index: number }) {
+function ItemCard({ item, index }: { item: Product; index: number }) {
   const { bg, accent } = PALETTES[item.variant]
 
   const card = (
@@ -46,38 +46,51 @@ function ItemCard({ item, index }: { item: Item; index: number }) {
     >
       {/* Visual thumb */}
       <motion.div
-        style={{ position: 'relative', height: 180, overflow: 'hidden', flexShrink: 0 }}
+        style={{ position: 'relative', overflow: 'hidden', flexShrink: 0 }}
         whileHover={{ scale: 1.03 }}
         transition={{ duration: 0.35, ease: EASE_EXPO }}
       >
-        <div style={{ position: 'absolute', inset: 0, background: bg }} />
-
-        {/* Industrial SVG pattern */}
-        <svg
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.22 }}
-          viewBox="0 0 300 180"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <rect x="80" y="30" width="140" height="120" rx="2" fill="none" stroke={accent} strokeWidth="0.8" />
-          <rect x="100" y="50" width="100" height="80" rx="1" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.6" />
-          <polyline points="80,30 64,30 64,46" fill="none" stroke={accent} strokeWidth="1" />
-          <polyline points="220,30 236,30 236,46" fill="none" stroke={accent} strokeWidth="1" />
-          <polyline points="80,150 64,150 64,134" fill="none" stroke={accent} strokeWidth="1" />
-          <polyline points="220,150 236,150 236,134" fill="none" stroke={accent} strokeWidth="1" />
-          <line x1="120" y1="90" x2="180" y2="90" stroke={accent} strokeWidth="0.5" opacity="0.5" />
-          <line x1="150" y1="60" x2="150" y2="120" stroke={accent} strokeWidth="0.5" opacity="0.5" />
-          <circle cx="150" cy="90" r="16" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.6" />
-          <circle cx="150" cy="90" r="6" fill={accent} opacity="0.3" />
-          <line x1="0" y1="15" x2="300" y2="15" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
-          <line x1="0" y1="165" x2="300" y2="165" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
-        </svg>
-
-        {/* Bottom gradient */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
-        }} />
+        {item.image_url ? (
+          <div style={{ position: 'relative', height: 180 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.image_url}
+              alt={item.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
+            }} />
+          </div>
+        ) : (
+          <div style={{ position: 'relative', height: 180 }}>
+            <div style={{ position: 'absolute', inset: 0, background: bg }} />
+            <svg
+              aria-hidden="true"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.22 }}
+              viewBox="0 0 300 180"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              <rect x="80" y="30" width="140" height="120" rx="2" fill="none" stroke={accent} strokeWidth="0.8" />
+              <rect x="100" y="50" width="100" height="80" rx="1" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.6" />
+              <polyline points="80,30 64,30 64,46" fill="none" stroke={accent} strokeWidth="1" />
+              <polyline points="220,30 236,30 236,46" fill="none" stroke={accent} strokeWidth="1" />
+              <polyline points="80,150 64,150 64,134" fill="none" stroke={accent} strokeWidth="1" />
+              <polyline points="220,150 236,150 236,134" fill="none" stroke={accent} strokeWidth="1" />
+              <line x1="120" y1="90" x2="180" y2="90" stroke={accent} strokeWidth="0.5" opacity="0.5" />
+              <line x1="150" y1="60" x2="150" y2="120" stroke={accent} strokeWidth="0.5" opacity="0.5" />
+              <circle cx="150" cy="90" r="16" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.6" />
+              <circle cx="150" cy="90" r="6" fill={accent} opacity="0.3" />
+              <line x1="0" y1="15" x2="300" y2="15" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
+              <line x1="0" y1="165" x2="300" y2="165" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
+            </svg>
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
+            }} />
+          </div>
+        )}
 
         {/* Category chip */}
         <div style={{
@@ -154,34 +167,66 @@ function ItemCard({ item, index }: { item: Item; index: number }) {
   )
 }
 
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function CardSkeleton() {
+  return (
+    <div style={{
+      backgroundColor: '#ffffff',
+      border: '1px solid rgba(23,35,58,0.08)',
+      overflow: 'hidden',
+    }}>
+      <div style={{ height: 180, backgroundColor: 'rgba(23,35,58,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      <div style={{ padding: '20px 22px 24px' }}>
+        <div style={{ height: 22, width: '70%', backgroundColor: 'rgba(23,35,58,0.06)', marginBottom: 10, animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: 14, width: '90%', backgroundColor: 'rgba(23,35,58,0.04)', marginBottom: 6, animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: 14, width: '60%', backgroundColor: 'rgba(23,35,58,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProdutosPage() {
-  const [tab, setTab] = useState<Tab>('produtos')
+  const [tab, setTab] = useState<ProductTab>('produtos')
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('Todos')
   const [filterOpen, setFilterOpen] = useState(true)
+  const [allItems, setAllItems] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/products')
+      .then(r => r.json())
+      .then((data: Product[]) => { setAllItems(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
   const categories = useMemo(() => {
-    const inTab = ALL_ITEMS.filter(i => i.tab === tab)
+    const inTab = allItems.filter(i => i.tab === tab)
     const unique = Array.from(new Set(inTab.map(i => i.category)))
     return ['Todos', ...unique]
-  }, [tab])
+  }, [tab, allItems])
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim()
-    return ALL_ITEMS.filter(item => {
+    return allItems.filter(item => {
       if (item.tab !== tab) return false
       if (activeCategory !== 'Todos' && item.category !== activeCategory) return false
       if (term && !item.name.toLowerCase().includes(term) && !item.description.toLowerCase().includes(term) && !item.category.toLowerCase().includes(term)) return false
       return true
     })
-  }, [tab, activeCategory, search])
+  }, [tab, activeCategory, search, allItems])
 
-  const handleTabChange = (next: Tab) => {
+  const handleTabChange = (next: ProductTab) => {
     setTab(next)
     setActiveCategory('Todos')
   }
+
+  const produtosCount = allItems.filter(i => i.tab === 'produtos').length
+  const maquinasCount = allItems.filter(i => i.tab === 'maquinas').length
 
   return (
     <>
@@ -296,8 +341,8 @@ export default function ProdutosPage() {
               gap: 0,
             }}>
               {([
-                { key: 'produtos' as Tab, label: 'Produtos', count: ALL_ITEMS.filter(i => i.tab === 'produtos').length },
-                { key: 'maquinas' as Tab, label: 'Máquinas', count: ALL_ITEMS.filter(i => i.tab === 'maquinas').length },
+                { key: 'produtos' as ProductTab, label: 'Produtos', count: produtosCount },
+                { key: 'maquinas' as ProductTab, label: 'Máquinas', count: maquinasCount },
               ] as const).map(t => (
                 <button
                   key={t.key}
@@ -457,7 +502,7 @@ export default function ProdutosPage() {
                       fontFamily: 'var(--font-inter)', fontSize: 13,
                       color: 'rgba(23,35,58,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
                     }}>
-                      {filtered.length} {filtered.length === 1 ? 'item' : 'itens'}
+                      {loading ? '...' : `${filtered.length} ${filtered.length === 1 ? 'item' : 'itens'}`}
                     </span>
                   </div>
                 </motion.div>
@@ -468,57 +513,70 @@ export default function ProdutosPage() {
 
         {/* ── Grid ──────────────────────────────────────────────────── */}
         <section className="produtos-grid-section" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 40px 96px' }}>
-          <AnimatePresence mode="wait">
-            {filtered.length > 0 ? (
-              <motion.div
-                key={`${tab}-${activeCategory}-${search}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 24,
-                }}
-                className="produtos-grid"
-              >
-                {filtered.map((item, i) => (
-                  <ItemCard key={item.id} item={item} index={i} />
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                style={{ textAlign: 'center', padding: '80px 0' }}
-              >
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(23,35,58,0.2)" strokeWidth="1.5" style={{ margin: '0 auto 20px', display: 'block' }}>
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <p style={{
-                  fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                  fontSize: 18, color: 'rgba(23,35,58,0.35)',
-                }}>
-                  Nenhum resultado encontrado para &ldquo;{search}&rdquo;
-                </p>
-                <button
-                  onClick={() => { setSearch(''); setActiveCategory('Todos') }}
+          {loading ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 24,
+              }}
+              className="produtos-grid"
+            >
+              {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {filtered.length > 0 ? (
+                <motion.div
+                  key={`${tab}-${activeCategory}-${search}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{
-                    marginTop: 16, background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                    fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
-                    color: '#FFCB08', textDecoration: 'underline',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 24,
                   }}
+                  className="produtos-grid"
                 >
-                  Limpar filtros
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {filtered.map((item, i) => (
+                    <ItemCard key={item.id} item={item} index={i} />
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{ textAlign: 'center', padding: '80px 0' }}
+                >
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(23,35,58,0.2)" strokeWidth="1.5" style={{ margin: '0 auto 20px', display: 'block' }}>
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <p style={{
+                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                    fontSize: 18, color: 'rgba(23,35,58,0.35)',
+                  }}>
+                    {search ? `Nenhum resultado encontrado para "${search}"` : 'Nenhum item encontrado'}
+                  </p>
+                  <button
+                    onClick={() => { setSearch(''); setActiveCategory('Todos') }}
+                    style={{
+                      marginTop: 16, background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                      fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      color: '#FFCB08', textDecoration: 'underline',
+                    }}
+                  >
+                    Limpar filtros
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
         </section>
 
         {/* ── CTA faixa ─────────────────────────────────────────────── */}
@@ -578,6 +636,10 @@ export default function ProdutosPage() {
       <Footer />
 
       <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
         .filter-panel-inner {
           padding: 16px 0;
           display: flex;

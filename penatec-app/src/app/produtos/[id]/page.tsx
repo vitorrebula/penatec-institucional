@@ -1,23 +1,13 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { fadeUp, fadeLeft, fadeRight, staggerContainer } from '@/lib/animations'
-
-interface ProductDetail {
-  id: number
-  name: string
-  category: string
-  description: string
-  tagline: string
-  variant: 'dark-blue' | 'graphite' | 'deep-navy' | 'steel' | 'warm-dark' | 'industrial'
-  badge?: string
-  specs: { label: string; value: string }[]
-}
+import { type Product, EXTENDED_BY_NAME } from '@/lib/products'
 
 const PALETTES: Record<string, string> = {
   'dark-blue':  'linear-gradient(135deg,#0a1628 0%,#1F325A 60%,#17233A 100%)',
@@ -27,59 +17,6 @@ const PALETTES: Record<string, string> = {
   'warm-dark':  'linear-gradient(135deg,#1a1008 0%,#2a1a0a 50%,#17233A 100%)',
   'industrial': 'linear-gradient(160deg,#0d1520 0%,#1F325A 40%,#2a3a52 100%)',
 }
-
-const PRODUCTS: ProductDetail[] = [
-  { id: 1, name: 'Misturador de Ingredientes', category: 'Linha Industrial', variant: 'dark-blue',
-    description: 'Misturador de alta capacidade para produção contínua, com controle eletrônico de velocidade e cuba em aço inox.',
-    tagline: 'Homogeneidade perfeita a cada ciclo.',
-    specs: [{ label: 'Capacidade da cuba', value: '20 L' }, { label: 'Motor', value: '1,5 CV' }, { label: 'Material', value: 'Aço inox 304' }, { label: 'Controle', value: 'Eletrônico de velocidade' }, { label: 'Rotação máx.', value: '1.400 rpm' }] },
-  { id: 2, name: 'Balança Digital Industrial', category: 'Linha Técnica', variant: 'graphite',
-    description: 'Pesagem de precisão com display retroiluminado, capacidade de até 30 kg e resolução de 1 g.',
-    tagline: 'Precisão que não mente.',
-    specs: [{ label: 'Capacidade máx.', value: '30 kg' }, { label: 'Resolução', value: '1 g' }, { label: 'Display', value: 'LCD retroiluminado' }, { label: 'Interface', value: 'RS-232 / USB' }, { label: 'Plataforma', value: 'Aço inox' }] },
-  { id: 3, name: 'Cortador de Frios', category: 'Linha Industrial', variant: 'steel',
-    description: 'Fatiamento uniforme de embutidos e queijos com lâmina de aço temperado e espessura regulável.',
-    tagline: 'Cada fatia com espessura exata.',
-    specs: [{ label: 'Lâmina', value: 'Aço temperado 220 mm' }, { label: 'Espessura de corte', value: '0 a 15 mm' }, { label: 'Prato', value: '220 × 170 mm' }, { label: 'Motor', value: '180 W' }, { label: 'Tensão', value: '110V / 220V' }] },
-  { id: 4, name: 'Dosador de Ingredientes', category: 'Linha Técnica', variant: 'warm-dark',
-    description: 'Dosagem volumétrica automatizada para farinhas, açúcares e aditivos com alta repetibilidade.',
-    tagline: 'Dose certa. Sem desperdício.',
-    specs: [{ label: 'Princípio', value: 'Volumétrico' }, { label: 'Dose por ciclo', value: '5 g a 2 kg' }, { label: 'Precisão', value: '± 0,5%' }, { label: 'Material', value: 'Aço inox / PP' }, { label: 'Controle', value: 'Painel digital' }] },
-  { id: 5, name: 'Seladora de Embalagens', category: 'Embalagem', variant: 'industrial',
-    description: 'Selagem contínua a calor para filmes plásticos e embalagens flexíveis, com ajuste de temperatura.',
-    tagline: 'Selagem segura. Produto protegido.',
-    specs: [{ label: 'Tipo de selagem', value: 'Contínua a calor' }, { label: 'Temperatura', value: '0 a 200°C (ajustável)' }, { label: 'Velocidade', value: 'até 12 m/min' }, { label: 'Largura da barra', value: '10 mm' }, { label: 'Tensão', value: '220V' }] },
-  { id: 6, name: 'Liquidificador Industrial', category: 'Linha Industrial', variant: 'deep-navy',
-    description: 'Motor de alta rotação com copo de 4 L em aço inox, ideal para processamento contínuo.',
-    tagline: 'Potência para processar sem parar.',
-    specs: [{ label: 'Volume do copo', value: '4 L' }, { label: 'Material do copo', value: 'Aço inox 304' }, { label: 'Motor', value: '1 CV' }, { label: 'Rotação máx.', value: '18.000 rpm' }, { label: 'Base', value: 'Borracha antiderrapante' }] },
-  { id: 7, name: 'Extrator de Suco', category: 'Linha Técnica', variant: 'graphite', badge: 'Novo',
-    description: 'Alta eficiência de extração com separação automática de polpa e capacidade de 30 L/h.',
-    tagline: 'Extração máxima. Desperdício zero.',
-    specs: [{ label: 'Capacidade', value: '30 L/h' }, { label: 'Separação de polpa', value: 'Automática' }, { label: 'Filtro', value: 'Aço inox perfurado' }, { label: 'Motor', value: '0,5 CV' }, { label: 'Dreno', value: 'Lateral com registro' }] },
-  { id: 8, name: 'Fritadeira Industrial', category: 'Linha Industrial', variant: 'dark-blue',
-    description: 'Capacidade de 20 L de óleo com termostato digital, dreno de fundo e estrutura em aço inox.',
-    tagline: 'Fritura uniforme. Alta produtividade.',
-    specs: [{ label: 'Volume de óleo', value: '20 L' }, { label: 'Termostato', value: 'Digital 0–200°C' }, { label: 'Cesto', value: 'Aço inox com gancho' }, { label: 'Dreno de fundo', value: 'Com válvula' }, { label: 'Tensão', value: '220V monofásico' }] },
-  { id: 9, name: 'Fogão Industrial 6 Bocas', category: 'Linha Premium', variant: 'steel', badge: 'Destaque',
-    description: 'Queimadores de alta BTU com grelhas de ferro fundido e mesa em aço inox 304.',
-    tagline: 'Potência de chef. Estrutura que dura.',
-    specs: [{ label: 'Queimadores', value: '6 duplo-fogo' }, { label: 'BTU total', value: '180.000 BTU/h' }, { label: 'Grelhas', value: 'Ferro fundido' }, { label: 'Mesa', value: 'Aço inox 304' }, { label: 'Combustível', value: 'GN ou GLP' }] },
-  { id: 10, name: 'Chapa para Lanches', category: 'Linha Técnica', variant: 'warm-dark',
-    description: 'Superfície em aço laminado com resistência de aquecimento dupla e regulagem de temperatura.',
-    tagline: 'Temperatura certa para o ponto perfeito.',
-    specs: [{ label: 'Superfície', value: 'Aço laminado 6 mm' }, { label: 'Aquecimento', value: 'Resistências duplas' }, { label: 'Temperatura máx.', value: '300°C' }, { label: 'Regulagem', value: 'Termostato ajustável' }, { label: 'Dimensões', value: '40 × 70 cm' }] },
-  { id: 11, name: 'Processador de Alimentos', category: 'Linha Premium', variant: 'industrial',
-    description: 'Múltiplos discos de corte intercambiáveis para fatiamento, ralação e moagem com capacidade de 8 kg/min.',
-    tagline: 'Versatilidade industrial. Um equipamento, mil possibilidades.',
-    specs: [{ label: 'Capacidade', value: '8 kg/min' }, { label: 'Discos inclusos', value: '5 tipos' }, { label: 'Cuba', value: 'Aço inox 2 L' }, { label: 'Motor', value: '0,75 CV' }, { label: 'Velocidades', value: '2 + pulso' }] },
-  { id: 12, name: 'Estufa de Fermentação', category: 'Linha Premium', variant: 'deep-navy',
-    description: 'Controle de temperatura e umidade com circulação forçada de ar, capacidade para 24 formas.',
-    tagline: 'Condições ideais. Resultado consistente.',
-    specs: [{ label: 'Capacidade', value: '24 formas (60×40)' }, { label: 'Temperatura', value: '25°C a 45°C' }, { label: 'Umidade', value: '60% a 95% UR' }, { label: 'Circulação', value: 'Forçada com ventilador' }, { label: 'Painel', value: 'Digital com timer' }] },
-]
-
-const PRODUCTS_MAP: Record<number, ProductDetail> = Object.fromEntries(PRODUCTS.map(p => [p.id, p]))
 
 function ProductSVGPattern() {
   return (
@@ -113,9 +50,36 @@ export default function ProdutoDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const product = PRODUCTS_MAP[Number(id)]
-  if (!product) notFound()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFoundState, setNotFoundState] = useState(false)
 
+  useEffect(() => {
+    fetch(`/api/products/${id}`)
+      .then(r => { if (!r.ok) { setNotFoundState(true); return null } return r.json() })
+      .then((data: Product | null) => { if (data) setProduct(data); setLoading(false) })
+      .catch(() => { setNotFoundState(true); setLoading(false) })
+  }, [id])
+
+  if (notFoundState) notFound()
+
+  if (loading || !product) {
+    return (
+      <>
+        <Header />
+        <main style={{ minHeight: '100vh', backgroundColor: '#17233A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{
+            width: 40, height: 40, border: '3px solid rgba(255,203,8,0.2)',
+            borderTopColor: '#FFCB08', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+        </main>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </>
+    )
+  }
+
+  const extended = EXTENDED_BY_NAME[product.name]
   const heroGradient = PALETTES[product.variant]
 
   return (
@@ -209,14 +173,16 @@ export default function ProdutoDetailPage({
                 {product.name}
               </motion.h1>
 
-              <motion.p variants={fadeUp} style={{
-                fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                fontSize: 'clamp(18px, 2.2vw, 26px)',
-                color: 'rgba(255,203,8,0.85)', lineHeight: 1.3,
-                marginBottom: 14, maxWidth: 520,
-              }}>
-                {product.tagline}
-              </motion.p>
+              {extended?.tagline && (
+                <motion.p variants={fadeUp} style={{
+                  fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                  fontSize: 'clamp(18px, 2.2vw, 26px)',
+                  color: 'rgba(255,203,8,0.85)', lineHeight: 1.3,
+                  marginBottom: 14, maxWidth: 520,
+                }}>
+                  {extended.tagline}
+                </motion.p>
+              )}
 
               <motion.p variants={fadeUp} style={{
                 fontFamily: 'var(--font-inter)', fontSize: 15.5, lineHeight: 1.7,
@@ -276,20 +242,31 @@ export default function ProdutoDetailPage({
                 style={{ position: 'relative', overflow: 'hidden' }}
               >
                 <div style={{ position: 'relative', height: 460, overflow: 'hidden' }} className="produto-main-img-wrap">
-                  <div style={{ position: 'absolute', inset: 0, background: heroGradient }} />
-                  <ProductSVGPattern />
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
-                  }} />
-                  <div style={{
-                    position: 'absolute', bottom: 24, left: 28,
-                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                    fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.45)',
-                  }}>
-                    Imagem ilustrativa
-                  </div>
+                  {product.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    <>
+                      <div style={{ position: 'absolute', inset: 0, background: heroGradient }} />
+                      <ProductSVGPattern />
+                      <div style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
+                      }} />
+                      <div style={{
+                        position: 'absolute', bottom: 24, left: 28,
+                        fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                        fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.45)',
+                      }}>
+                        Imagem ilustrativa
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
 
@@ -317,32 +294,38 @@ export default function ProdutoDetailPage({
                   Dados do Produto
                 </h2>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {product.specs.map((spec, i) => (
-                    <div key={i} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '16px 0',
-                      borderBottom: '1px solid rgba(23,35,58,0.08)',
-                    }}>
-                      <span style={{
-                        fontFamily: 'var(--font-inter)', fontSize: 13.5,
-                        color: 'rgba(23,35,58,0.5)', display: 'flex', alignItems: 'center', gap: 10,
+                {extended?.specs?.length ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {extended.specs.map((spec, i) => (
+                      <div key={i} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '16px 0',
+                        borderBottom: '1px solid rgba(23,35,58,0.08)',
                       }}>
                         <span style={{
-                          width: 6, height: 6, backgroundColor: '#FFCB08', flexShrink: 0,
-                          display: 'inline-block',
-                        }} />
-                        {spec.label}
-                      </span>
-                      <span style={{
-                        fontFamily: 'var(--font-barlow)', fontWeight: 800,
-                        fontSize: 15, color: '#17233A', letterSpacing: '0.02em',
-                      }}>
-                        {spec.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                          fontFamily: 'var(--font-inter)', fontSize: 13.5,
+                          color: 'rgba(23,35,58,0.5)', display: 'flex', alignItems: 'center', gap: 10,
+                        }}>
+                          <span style={{ width: 6, height: 6, backgroundColor: '#FFCB08', flexShrink: 0, display: 'inline-block' }} />
+                          {spec.label}
+                        </span>
+                        <span style={{
+                          fontFamily: 'var(--font-barlow)', fontWeight: 800,
+                          fontSize: 15, color: '#17233A', letterSpacing: '0.02em',
+                        }}>
+                          {spec.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{
+                    fontFamily: 'var(--font-inter)', fontSize: 14, lineHeight: 1.7,
+                    color: 'rgba(23,35,58,0.45)',
+                  }}>
+                    {product.description}
+                  </p>
+                )}
 
                 <div style={{ marginTop: 36, paddingTop: 28, borderTop: '2px solid rgba(23,35,58,0.1)' }}>
                   <p style={{
@@ -483,6 +466,7 @@ export default function ProdutoDetailPage({
       <Footer />
 
       <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
         .produto-hero-inner { max-width: 700px; }
 
         .produto-specs-grid {

@@ -1,25 +1,13 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, EASE_EXPO } from '@/lib/animations'
-
-// ─── Types & data ─────────────────────────────────────────────────────────────
-
-interface MachineDetail {
-  id: number
-  name: string
-  category: string
-  description: string
-  tagline: string
-  variant: 'dark-blue' | 'graphite' | 'deep-navy' | 'steel' | 'warm-dark' | 'industrial'
-  badge?: string
-  specs: { label: string; value: string }[]
-}
+import { type Product, EXTENDED_BY_NAME } from '@/lib/products'
 
 const PALETTES: Record<string, string> = {
   'dark-blue':  'linear-gradient(135deg,#0a1628 0%,#1F325A 60%,#17233A 100%)',
@@ -36,61 +24,6 @@ const CAROUSEL_GRADIENTS = [
   'linear-gradient(120deg,#0F1924 0%,#17233A 50%,#1F325A 100%)',
   'linear-gradient(170deg,#0d1520 0%,#2a3a52 40%,#17233A 100%)',
 ]
-
-const MACHINES: MachineDetail[] = [
-  { id: 13, name: 'Amassadeira Espiral 25 kg', category: 'Panificação', variant: 'dark-blue', badge: 'Destaque',
-    description: 'Desenvolvimento de glúten superior com espiral e cuba rotativos, motor protegido contra sobrecarga.',
-    tagline: 'Mais glúten. Mais estrutura. Mais resultado.',
-    specs: [{ label: 'Capacidade', value: '25 kg' }, { label: 'Potência', value: '2 CV' }, { label: 'Voltagem', value: '220V / 380V' }, { label: 'Velocidades', value: '2 (lenta / rápida)' }, { label: 'Material', value: 'Aço inox 304' }] },
-  { id: 14, name: 'Divisora de Massas', category: 'Panificação', variant: 'graphite',
-    description: 'Divisão precisa em 20 ou 30 porções iguais com pistões de aço inox e regulagem de peso.',
-    tagline: 'Precisão que padroniza cada peça.',
-    specs: [{ label: 'Porções', value: '20 ou 30 unidades' }, { label: 'Capacidade', value: 'até 1,5 kg/ciclo' }, { label: 'Pistões', value: 'Aço inox temperado' }, { label: 'Regulagem', value: 'Micrométrica' }, { label: 'Acionamento', value: 'Manual / Pneumático' }] },
-  { id: 15, name: 'Modeladora de Pães', category: 'Panificação', variant: 'steel',
-    description: 'Modelagem cilíndrica e alongada com rolos reguláveis para diferentes espessuras de massa.',
-    tagline: 'Forma perfeita. Produção constante.',
-    specs: [{ label: 'Velocidade', value: 'Ajustável' }, { label: 'Comprimento máx.', value: '28 cm' }, { label: 'Rolos', value: 'Aço inox polido' }, { label: 'Correia', value: 'Alimentar certificada' }, { label: 'Produção', value: 'até 1.200 pçs/h' }] },
-  { id: 16, name: 'Câmara Fria Industrial', category: 'Refrigeração', variant: 'warm-dark', badge: 'Novo',
-    description: 'Painéis modulares de 100 mm com sistema de refrigeração integrado, capacidade de até 20 m³.',
-    tagline: 'Conservação industrial sob medida.',
-    specs: [{ label: 'Volume', value: 'até 20 m³' }, { label: 'Temperatura', value: '-25°C a +5°C' }, { label: 'Painel', value: '100 mm poliuretano' }, { label: 'Piso', value: 'Modulável (opt.)' }, { label: 'Instalação', value: 'Modular in loco' }] },
-  { id: 17, name: 'Forno de Lastro 4 Câmaras', category: 'Panificação', variant: 'industrial',
-    description: 'Lastro de pedra refratária com controle independente de temperatura por câmara e vapor com borrifador.',
-    tagline: 'Calor controlado. Qualidade em cada câmara.',
-    specs: [{ label: 'Câmaras', value: '4 independentes' }, { label: 'Dimensão int.', value: '80 × 120 cm/câmara' }, { label: 'Temperatura', value: 'até 350°C' }, { label: 'Lastro', value: 'Pedra refratária' }, { label: 'Vapor', value: 'Borrifador integrado' }] },
-  { id: 18, name: 'Forno Turbo a Gás', category: 'Panificação', variant: 'deep-navy',
-    description: 'Circulação forçada de ar quente para assamento uniforme, capacidade para 10 assadeiras 60×40.',
-    tagline: 'Eficiência máxima. Assamento uniforme.',
-    specs: [{ label: 'Assadeiras', value: '10 (60 × 40 cm)' }, { label: 'Temperatura', value: 'até 280°C' }, { label: 'Combustível', value: 'Gás GN / GLP' }, { label: 'Circulação', value: 'Forçada bidirecional' }, { label: 'Timer', value: 'Digital programável' }] },
-  { id: 19, name: 'Laminadora de Massas', category: 'Confeitaria', variant: 'graphite',
-    description: 'Espessura regulável de 0,5 a 30 mm, rolos de aço inox polido com largura útil de 50 cm.',
-    tagline: 'Espessura certa. Produção sem paradas.',
-    specs: [{ label: 'Espessura', value: '0,5 a 30 mm' }, { label: 'Largura útil', value: '50 cm' }, { label: 'Rolos', value: 'Aço inox polido' }, { label: 'Correia', value: 'Dupla (ida e volta)' }, { label: 'Motor', value: '0,5 CV monofásico' }] },
-  { id: 20, name: 'Batedeira Planetária 20 L', category: 'Confeitaria', variant: 'dark-blue', badge: 'Destaque',
-    description: 'Três velocidades com proteção de cuba e três tipos de batedor inclusos, estrutura em ferro fundido.',
-    tagline: 'Potência e controle para cada receita.',
-    specs: [{ label: 'Volume da cuba', value: '20 L (inox)' }, { label: 'Velocidades', value: '3 + pulso' }, { label: 'Batedores', value: 'Raquete, gancho, globo' }, { label: 'Motor', value: '1 CV' }, { label: 'Estrutura', value: 'Ferro fundido pintado' }] },
-  { id: 21, name: 'Túnel de Resfriamento', category: 'Refrigeração', variant: 'steel',
-    description: 'Resfriamento rápido de produtos assados com correia transportadora ajustável em velocidade.',
-    tagline: 'Resfriamento rápido. Produto pronto mais rápido.',
-    specs: [{ label: 'Comprimento', value: '3 a 10 m (modular)' }, { label: 'Largura correia', value: '60 cm' }, { label: 'Temperatura', value: '8°C a 15°C' }, { label: 'Velocidade', value: 'Ajustável (inversor)' }, { label: 'Refrigeração', value: 'Evaporação forçada' }] },
-  { id: 22, name: 'Embaladora a Vácuo', category: 'Embalagem', variant: 'warm-dark',
-    description: 'Câmara dupla com ciclo automático, barra de selagem de 42 cm e bomba de 20 m³/h.',
-    tagline: 'Vedação precisa. Vida útil estendida.',
-    specs: [{ label: 'Câmaras', value: '2 (ciclo alternado)' }, { label: 'Barra selagem', value: '42 cm' }, { label: 'Bomba vácuo', value: '20 m³/h' }, { label: 'Vácuo máximo', value: '99,9%' }, { label: 'Ciclo', value: '15–20 seg.' }] },
-  { id: 23, name: 'Lavadora de Bandejas', category: 'Limpeza', variant: 'industrial',
-    description: 'Lavagem por imersão e jato com temperatura programável, capacidade de 40 bandejas/ciclo.',
-    tagline: 'Higiene industrial em alto ritmo.',
-    specs: [{ label: 'Capacidade', value: '40 bandejas/ciclo' }, { label: 'Temperatura', value: 'até 85°C' }, { label: 'Lavagem', value: 'Imersão + jato' }, { label: 'Tempo de ciclo', value: '3 a 8 min.' }, { label: 'Aquecimento', value: 'Elétrico / vapor' }] },
-  { id: 24, name: 'Cortadora de Pães Industrial', category: 'Panificação', variant: 'deep-navy',
-    description: 'Fatiamento uniforme com lâminas de aço inox, largura ajustável de 8 a 25 mm e guia de acrílico.',
-    tagline: 'Cada fatia no ponto certo.',
-    specs: [{ label: 'Espessura corte', value: '8 a 25 mm' }, { label: 'Lâminas', value: 'Aço inox endurecido' }, { label: 'Guia', value: 'Acrílico transparente' }, { label: 'Produção', value: 'até 800 pães/h' }, { label: 'Tensão', value: '110V / 220V' }] },
-]
-
-const MACHINES_MAP: Record<number, MachineDetail> = Object.fromEntries(MACHINES.map(m => [m.id, m]))
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function MachineSVGPattern({ rotate = 0 }: { rotate?: number }) {
   return (
@@ -122,20 +55,44 @@ function MachineSVGPattern({ rotate = 0 }: { rotate?: number }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function MachinaDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const machine = MACHINES_MAP[Number(id)]
-  if (!machine) notFound()
-
+  const [machine, setMachine] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFoundState, setNotFoundState] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
   const totalSlides = CAROUSEL_GRADIENTS.length
 
+  useEffect(() => {
+    fetch(`/api/products/${id}`)
+      .then(r => { if (!r.ok) { setNotFoundState(true); return null } return r.json() })
+      .then((data: Product | null) => { if (data) setMachine(data); setLoading(false) })
+      .catch(() => { setNotFoundState(true); setLoading(false) })
+  }, [id])
+
+  if (notFoundState) notFound()
+
+  if (loading || !machine) {
+    return (
+      <>
+        <Header />
+        <main style={{ minHeight: '100vh', backgroundColor: '#17233A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{
+            width: 40, height: 40, border: '3px solid rgba(255,203,8,0.2)',
+            borderTopColor: '#FFCB08', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+        </main>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </>
+    )
+  }
+
+  const extended = EXTENDED_BY_NAME[machine.name]
   const heroGradient = PALETTES[machine.variant]
 
   const prev = () => setActiveSlide(i => (i - 1 + totalSlides) % totalSlides)
@@ -154,7 +111,6 @@ export default function MachinaDetailPage({
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* Grid pattern */}
           <svg aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.055, pointerEvents: 'none' }}>
             <defs>
               <pattern id="hero-grid" width="48" height="48" patternUnits="userSpaceOnUse">
@@ -164,7 +120,6 @@ export default function MachinaDetailPage({
             <rect width="100%" height="100%" fill="url(#hero-grid)" />
           </svg>
 
-          {/* Decorative right panel */}
           <div className="maquina-hero-deco" style={{
             position: 'absolute', right: 0, top: 0, bottom: 0,
             width: '42%', overflow: 'hidden', opacity: 0.18,
@@ -174,8 +129,6 @@ export default function MachinaDetailPage({
           </div>
 
           <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', position: 'relative' }} className="maquina-hero-inner">
-
-            {/* Breadcrumb */}
             <motion.div variants={fadeUp} initial="hidden" animate="visible"
               style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}
             >
@@ -183,7 +136,7 @@ export default function MachinaDetailPage({
                 { label: 'Início', href: '/' },
                 { label: 'Portfólio', href: '/produtos' },
                 { label: 'Máquinas', href: '/produtos?tab=maquinas' },
-              ].map((crumb, i) => (
+              ].map((crumb) => (
                 <span key={crumb.href} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Link href={crumb.href} style={{
                     fontFamily: 'var(--font-inter)', fontSize: 13,
@@ -206,7 +159,6 @@ export default function MachinaDetailPage({
             </motion.div>
 
             <motion.div variants={staggerContainer} initial="hidden" animate="visible">
-              {/* Category + badge row */}
               <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
                 <span style={{
                   fontFamily: 'var(--font-barlow)', fontWeight: 600,
@@ -227,7 +179,6 @@ export default function MachinaDetailPage({
                 )}
               </motion.div>
 
-              {/* Machine name */}
               <motion.h1 variants={fadeUp} style={{
                 fontFamily: 'var(--font-barlow)', fontWeight: 900,
                 fontSize: 'clamp(40px, 6vw, 80px)',
@@ -237,17 +188,17 @@ export default function MachinaDetailPage({
                 {machine.name}
               </motion.h1>
 
-              {/* Tagline */}
-              <motion.p variants={fadeUp} style={{
-                fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                fontSize: 'clamp(18px, 2.2vw, 26px)',
-                color: 'rgba(255,203,8,0.85)', lineHeight: 1.3,
-                marginBottom: 14, maxWidth: 520,
-              }}>
-                {machine.tagline}
-              </motion.p>
+              {extended?.tagline && (
+                <motion.p variants={fadeUp} style={{
+                  fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                  fontSize: 'clamp(18px, 2.2vw, 26px)',
+                  color: 'rgba(255,203,8,0.85)', lineHeight: 1.3,
+                  marginBottom: 14, maxWidth: 520,
+                }}>
+                  {extended.tagline}
+                </motion.p>
+              )}
 
-              {/* Description */}
               <motion.p variants={fadeUp} style={{
                 fontFamily: 'var(--font-inter)', fontSize: 15.5, lineHeight: 1.7,
                 color: 'rgba(255,255,255,0.5)', maxWidth: 460, marginBottom: 40,
@@ -255,7 +206,6 @@ export default function MachinaDetailPage({
                 {machine.description}
               </motion.p>
 
-              {/* Scroll CTA */}
               <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <a href="#especificacoes" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -293,100 +243,11 @@ export default function MachinaDetailPage({
           </div>
         </section>
 
-                {/* ── 3. Vídeo ────────────────────────────────────────────── */}
-        <section style={{ backgroundColor: '#ffffff', padding: '80px 0' }}>
-          <div className="maquina-section-pad" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
-
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              style={{ textAlign: 'center', marginBottom: 48 }}
-            >
-              <motion.span variants={fadeUp} style={{
-                display: 'inline-block',
-                fontFamily: 'var(--font-barlow)', fontWeight: 600,
-                fontSize: 11, letterSpacing: '0.35em', textTransform: 'uppercase',
-                color: '#FFCB08', marginBottom: 14, paddingLeft: 20, borderLeft: '3px solid #FFCB08',
-              }}>
-                Vídeo Demonstrativo
-              </motion.span>
-              <motion.h2 variants={fadeUp} style={{
-                fontFamily: 'var(--font-barlow)', fontWeight: 900,
-                fontSize: 'clamp(26px, 3vw, 40px)',
-                color: '#17233A', lineHeight: 1.1, marginBottom: 12, display: 'block',
-              }}>
-                Veja a Máquina em Ação
-              </motion.h2>
-              <motion.p variants={fadeUp} style={{
-                fontFamily: 'var(--font-inter)', fontSize: 15, lineHeight: 1.7,
-                color: 'rgba(23,35,58,0.5)', maxWidth: 480, margin: '0 auto',
-              }}>
-                Assista ao vídeo e conheça o desempenho da {machine.name} em operação real.
-              </motion.p>
-            </motion.div>
-
-            {/* Video container — replace src with a real embed URL */}
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              style={{ maxWidth: 880, margin: '0 auto', position: 'relative' }}
-            >
-              <div style={{
-                position: 'relative', paddingBottom: '56.25%', /* 16:9 */
-                height: 0, overflow: 'hidden',
-                backgroundColor: '#17233A',
-                border: '2px solid rgba(23,35,58,0.1)',
-              }}>
-                {/* Video placeholder — swap for <iframe> with real URL when available */}
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: heroGradient,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexDirection: 'column', gap: 20,
-                }}>
-                  <MachineSVGPattern rotate={5} />
-                  {/* Play button */}
-                  <div style={{
-                    position: 'relative', zIndex: 1,
-                    width: 72, height: 72,
-                    backgroundColor: '#FFCB08',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 8px 32px rgba(255,203,8,0.35)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                  }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 40px rgba(255,203,8,0.5)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(255,203,8,0.35)' }}
-                  >
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#17233A">
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                  </div>
-                  <p style={{
-                    position: 'relative', zIndex: 1,
-                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                    fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.4)',
-                  }}>
-                    Vídeo em breve
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-
-        {/* ── 2. Imagem principal + Especificações ─────────────────── */}
+        {/* ── 2. Imagem + Especificações ─────────────────────────── */}
         <section id="especificacoes" style={{ backgroundColor: '#F4F6FA', padding: '80px 0' }}>
           <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }} className="maquina-specs-inner">
             <div className="maquina-specs-grid">
 
-              {/* Main image */}
               <motion.div
                 variants={fadeLeft}
                 initial="hidden"
@@ -396,25 +257,34 @@ export default function MachinaDetailPage({
                 className="maquina-main-image"
               >
                 <div className="maquina-main-img-wrap" style={{ position: 'relative', height: 460, overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, background: heroGradient }} />
-                  <MachineSVGPattern rotate={0} />
-                  {/* Bottom gradient overlay */}
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
-                  }} />
-                  <div style={{
-                    position: 'absolute', bottom: 24, left: 28,
-                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
-                    fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.45)',
-                  }}>
-                    Imagem ilustrativa
-                  </div>
+                  {machine.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={machine.image_url}
+                      alt={machine.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    <>
+                      <div style={{ position: 'absolute', inset: 0, background: heroGradient }} />
+                      <MachineSVGPattern rotate={0} />
+                      <div style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
+                      }} />
+                      <div style={{
+                        position: 'absolute', bottom: 24, left: 28,
+                        fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                        fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.45)',
+                      }}>
+                        Imagem ilustrativa
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
 
-              {/* Specs panel */}
               <motion.div
                 variants={fadeRight}
                 initial="hidden"
@@ -438,32 +308,38 @@ export default function MachinaDetailPage({
                   Dados do Equipamento
                 </h2>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {machine.specs.map((spec, i) => (
-                    <div key={i} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '16px 0',
-                      borderBottom: '1px solid rgba(23,35,58,0.08)',
-                    }}>
-                      <span style={{
-                        fontFamily: 'var(--font-inter)', fontSize: 13.5,
-                        color: 'rgba(23,35,58,0.5)', display: 'flex', alignItems: 'center', gap: 10,
+                {extended?.specs?.length ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {extended.specs.map((spec, i) => (
+                      <div key={i} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '16px 0',
+                        borderBottom: '1px solid rgba(23,35,58,0.08)',
                       }}>
                         <span style={{
-                          width: 6, height: 6, backgroundColor: '#FFCB08', flexShrink: 0,
-                          display: 'inline-block',
-                        }} />
-                        {spec.label}
-                      </span>
-                      <span style={{
-                        fontFamily: 'var(--font-barlow)', fontWeight: 800,
-                        fontSize: 15, color: '#17233A', letterSpacing: '0.02em',
-                      }}>
-                        {spec.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                          fontFamily: 'var(--font-inter)', fontSize: 13.5,
+                          color: 'rgba(23,35,58,0.5)', display: 'flex', alignItems: 'center', gap: 10,
+                        }}>
+                          <span style={{ width: 6, height: 6, backgroundColor: '#FFCB08', flexShrink: 0, display: 'inline-block' }} />
+                          {spec.label}
+                        </span>
+                        <span style={{
+                          fontFamily: 'var(--font-barlow)', fontWeight: 800,
+                          fontSize: 15, color: '#17233A', letterSpacing: '0.02em',
+                        }}>
+                          {spec.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{
+                    fontFamily: 'var(--font-inter)', fontSize: 14, lineHeight: 1.7,
+                    color: 'rgba(23,35,58,0.45)',
+                  }}>
+                    {machine.description}
+                  </p>
+                )}
 
                 <div style={{ marginTop: 36, paddingTop: 28, borderTop: '2px solid rgba(23,35,58,0.1)' }}>
                   <p style={{
@@ -495,11 +371,92 @@ export default function MachinaDetailPage({
           </div>
         </section>
 
+        {/* ── 3. Vídeo ────────────────────────────────────────────── */}
+        <section style={{ backgroundColor: '#ffffff', padding: '80px 0' }}>
+          <div className="maquina-section-pad" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              style={{ textAlign: 'center', marginBottom: 48 }}
+            >
+              <motion.span variants={fadeUp} style={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-barlow)', fontWeight: 600,
+                fontSize: 11, letterSpacing: '0.35em', textTransform: 'uppercase',
+                color: '#FFCB08', marginBottom: 14, paddingLeft: 20, borderLeft: '3px solid #FFCB08',
+              }}>
+                Vídeo Demonstrativo
+              </motion.span>
+              <motion.h2 variants={fadeUp} style={{
+                fontFamily: 'var(--font-barlow)', fontWeight: 900,
+                fontSize: 'clamp(26px, 3vw, 40px)',
+                color: '#17233A', lineHeight: 1.1, marginBottom: 12, display: 'block',
+              }}>
+                Veja a Máquina em Ação
+              </motion.h2>
+              <motion.p variants={fadeUp} style={{
+                fontFamily: 'var(--font-inter)', fontSize: 15, lineHeight: 1.7,
+                color: 'rgba(23,35,58,0.5)', maxWidth: 480, margin: '0 auto',
+              }}>
+                Assista ao vídeo e conheça o desempenho da {machine.name} em operação real.
+              </motion.p>
+            </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              style={{ maxWidth: 880, margin: '0 auto', position: 'relative' }}
+            >
+              <div style={{
+                position: 'relative', paddingBottom: '56.25%',
+                height: 0, overflow: 'hidden',
+                backgroundColor: '#17233A',
+                border: '2px solid rgba(23,35,58,0.1)',
+              }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: heroGradient,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexDirection: 'column', gap: 20,
+                }}>
+                  <MachineSVGPattern rotate={5} />
+                  <div style={{
+                    position: 'relative', zIndex: 1,
+                    width: 72, height: 72,
+                    backgroundColor: '#FFCB08',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 32px rgba(255,203,8,0.35)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.08)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 40px rgba(255,203,8,0.5)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px rgba(255,203,8,0.35)' }}
+                  >
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#17233A">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                  </div>
+                  <p style={{
+                    position: 'relative', zIndex: 1,
+                    fontFamily: 'var(--font-barlow)', fontWeight: 700,
+                    fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase',
+                    color: 'rgba(255,255,255,0.4)',
+                  }}>
+                    Vídeo em breve
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* ── 4. Carrossel de imagens ──────────────────────────────── */}
         <section style={{ backgroundColor: '#17233A', padding: '80px 0', overflow: 'hidden' }}>
           <div className="maquina-section-pad" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
-
-            {/* Section header */}
             <motion.div
               variants={staggerContainer}
               initial="hidden"
@@ -525,7 +482,6 @@ export default function MachinaDetailPage({
                 </motion.h2>
               </div>
 
-              {/* Navigation controls */}
               <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{
                   fontFamily: 'var(--font-barlow)', fontWeight: 700,
@@ -563,7 +519,6 @@ export default function MachinaDetailPage({
               </motion.div>
             </motion.div>
 
-            {/* Carousel */}
             <div style={{ position: 'relative', overflow: 'hidden' }}>
               <AnimatePresence mode="wait">
                 <motion.div
@@ -592,7 +547,6 @@ export default function MachinaDetailPage({
                 </motion.div>
               </AnimatePresence>
 
-              {/* Dot indicators */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
                 {CAROUSEL_GRADIENTS.map((_, i) => (
                   <button
@@ -618,7 +572,6 @@ export default function MachinaDetailPage({
           <div className="maquina-section-pad" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
             <div className="maquina-cta-inner">
 
-              {/* Left: text */}
               <motion.div
                 variants={fadeLeft}
                 initial="hidden"
@@ -648,7 +601,6 @@ export default function MachinaDetailPage({
                 </p>
               </motion.div>
 
-              {/* Right: action panel */}
               <motion.div
                 variants={fadeRight}
                 initial="hidden"
@@ -660,7 +612,6 @@ export default function MachinaDetailPage({
                   position: 'relative', overflow: 'hidden',
                 }}
               >
-                {/* Decorative corner */}
                 <div style={{
                   position: 'absolute', top: 0, right: 0,
                   width: 80, height: 80,
@@ -724,6 +675,7 @@ export default function MachinaDetailPage({
       <Footer />
 
       <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
         .maquina-hero-inner { max-width: 700px; }
 
         .maquina-specs-grid {

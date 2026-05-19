@@ -1,19 +1,20 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { fadeUp, staggerContainer, EASE_EXPO } from '@/lib/animations'
-import { ALL_ITEMS } from '@/lib/products'
+import { type Product } from '@/lib/products'
 
 interface MockPhotoProps {
-  variant: 'dark-blue' | 'graphite' | 'deep-navy' | 'steel' | 'warm-dark' | 'industrial'
+  variant: Product['variant']
   label: string
   category: string
+  imageUrl?: string | null
   tall?: boolean
 }
 
-function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
+function MockPhoto({ variant, label, category, imageUrl, tall }: MockPhotoProps) {
   const palettes = {
     'dark-blue':  { bg: 'linear-gradient(135deg,#0a1628 0%,#1F325A 60%,#17233A 100%)', accent: '#FFCB08' },
     'graphite':   { bg: 'linear-gradient(135deg,#1a1a1a 0%,#2C2C2C 60%,#1a1a1a 100%)', accent: '#FFCB08' },
@@ -34,30 +35,49 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, ease: EASE_EXPO }}
     >
-      {/* Background gradient */}
-      <div style={{ position: 'absolute', inset: 0, background: bg }} />
-
-      {/* Abstract industrial pattern */}
-      <svg
-        aria-hidden="true"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.25 }}
-        viewBox="0 0 300 200"
-        preserveAspectRatio="xMidYMid slice"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect x="80" y="40" width="140" height="120" rx="2" fill="none" stroke={accent} strokeWidth="0.8" />
-        <rect x="100" y="60" width="100" height="80" rx="1" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.6" />
-        <polyline points="80,40 64,40 64,56" fill="none" stroke={accent} strokeWidth="1" />
-        <polyline points="220,40 236,40 236,56" fill="none" stroke={accent} strokeWidth="1" />
-        <polyline points="80,160 64,160 64,144" fill="none" stroke={accent} strokeWidth="1" />
-        <polyline points="220,160 236,160 236,144" fill="none" stroke={accent} strokeWidth="1" />
-        <line x1="120" y1="100" x2="180" y2="100" stroke={accent} strokeWidth="0.5" opacity="0.5" />
-        <line x1="150" y1="70"  x2="150" y2="130" stroke={accent} strokeWidth="0.5" opacity="0.5" />
-        <circle cx="150" cy="100" r="16" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.6" />
-        <circle cx="150" cy="100" r="6"  fill={accent} opacity="0.3" />
-        <line x1="0" y1="20"  x2="300" y2="20"  stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
-        <line x1="0" y1="180" x2="300" y2="180" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
-      </svg>
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={label}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <>
+          <div style={{ position: 'absolute', inset: 0, background: bg }} />
+          <svg
+            aria-hidden="true"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.25 }}
+            viewBox="0 0 300 200"
+            preserveAspectRatio="xMidYMid slice"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect x="80" y="40" width="140" height="120" rx="2" fill="none" stroke={accent} strokeWidth="0.8" />
+            <rect x="100" y="60" width="100" height="80" rx="1" fill="none" stroke={accent} strokeWidth="0.5" opacity="0.6" />
+            <polyline points="80,40 64,40 64,56" fill="none" stroke={accent} strokeWidth="1" />
+            <polyline points="220,40 236,40 236,56" fill="none" stroke={accent} strokeWidth="1" />
+            <polyline points="80,160 64,160 64,144" fill="none" stroke={accent} strokeWidth="1" />
+            <polyline points="220,160 236,160 236,144" fill="none" stroke={accent} strokeWidth="1" />
+            <line x1="120" y1="100" x2="180" y2="100" stroke={accent} strokeWidth="0.5" opacity="0.5" />
+            <line x1="150" y1="70"  x2="150" y2="130" stroke={accent} strokeWidth="0.5" opacity="0.5" />
+            <circle cx="150" cy="100" r="16" fill="none" stroke={accent} strokeWidth="0.8" opacity="0.6" />
+            <circle cx="150" cy="100" r="6"  fill={accent} opacity="0.3" />
+            <line x1="0" y1="20"  x2="300" y2="20"  stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
+            <line x1="0" y1="180" x2="300" y2="180" stroke={accent} strokeWidth="0.3" opacity="0.3" strokeDasharray="3 6" />
+          </svg>
+          {/* Top-right "camera" icon mock */}
+          <div style={{
+            position: 'absolute', top: 14, right: 14,
+            width: 28, height: 28, border: '1px solid rgba(255,203,8,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFCB08" strokeWidth="1.5" opacity="0.7">
+              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+        </>
+      )}
 
       {/* Bottom gradient overlay */}
       <div style={{
@@ -83,31 +103,16 @@ function MockPhoto({ variant, label, category, tall }: MockPhotoProps) {
           {label}
         </div>
       </div>
-
-      {/* Top-right "camera" icon mock */}
-      <div style={{
-        position: 'absolute', top: 14, right: 14,
-        width: 28, height: 28, border: '1px solid rgba(255,203,8,0.35)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFCB08" strokeWidth="1.5" opacity="0.7">
-          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-      </div>
     </motion.div>
   )
 }
 
-const GALLERY_ALL = ALL_ITEMS.filter(i => i.destaque)
-
-function itemHref(item: (typeof GALLERY_ALL)[number]) {
+function itemHref(item: Product) {
   return item.tab === 'maquinas'
     ? `/produtos/maquinas/${item.id}#especificacoes`
     : `/produtos/${item.id}#especificacoes`
 }
 
-/* Stagger child variant for individual grid cells */
 const gridItem = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] } },
@@ -115,7 +120,15 @@ const gridItem = {
 
 export default function GallerySection() {
   const [activePhoto, setActivePhoto] = useState(0)
+  const [galleryItems, setGalleryItems] = useState<Product[]>([])
   const galleryCarouselRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch('/api/products?destaque=true')
+      .then(r => r.json())
+      .then((data: Product[]) => setGalleryItems(data))
+      .catch(() => {})
+  }, [])
 
   const onGalleryScroll = useCallback(() => {
     const el = galleryCarouselRef.current
@@ -136,6 +149,8 @@ export default function GallerySection() {
     const card = el.children[idx] as HTMLElement
     if (card) el.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
   }, [])
+
+  if (galleryItems.length === 0) return null
 
   return (
     <section id="galeria" style={{ backgroundColor: '#F4F6FA', padding: '120px 0' }}>
@@ -184,17 +199,23 @@ export default function GallerySection() {
           viewport={{ once: true, amount: 0.1 }}
           style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto auto', gap: 3 }}
         >
-          {GALLERY_ALL.slice(0, 5).map((item, i) => (
+          {galleryItems.slice(0, 5).map((item, i) => (
             <motion.div key={item.id} variants={gridItem} style={i === 0 ? { gridRow: '1 / 3' } : undefined}>
               <Link href={itemHref(item)} style={{ display: 'block', height: i === 0 ? '100%' : 'auto' }}>
-                <MockPhoto variant={item.variant} label={item.name} category={item.category} tall={i === 0} />
+                <MockPhoto
+                  variant={item.variant}
+                  label={item.name}
+                  category={item.category}
+                  imageUrl={item.image_url}
+                  tall={i === 0}
+                />
               </Link>
             </motion.div>
           ))}
         </motion.div>
 
         {/* Bottom row — staggered */}
-        {GALLERY_ALL.length > 5 && (
+        {galleryItems.length > 5 && (
           <motion.div
             className="gallery-bento"
             variants={staggerContainer}
@@ -203,10 +224,15 @@ export default function GallerySection() {
             viewport={{ once: true, amount: 0.3 }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, marginTop: 3 }}
           >
-            {GALLERY_ALL.slice(5).map(item => (
+            {galleryItems.slice(5).map(item => (
               <motion.div key={item.id} variants={gridItem}>
                 <Link href={itemHref(item)} style={{ display: 'block' }}>
-                  <MockPhoto variant={item.variant} label={item.name} category={item.category} />
+                  <MockPhoto
+                    variant={item.variant}
+                    label={item.name}
+                    category={item.category}
+                    imageUrl={item.image_url}
+                  />
                 </Link>
               </motion.div>
             ))}
@@ -220,21 +246,26 @@ export default function GallerySection() {
             className="gallery-carousel-track"
             onScroll={onGalleryScroll}
           >
-            {GALLERY_ALL.map((item, i) => (
+            {galleryItems.map((item, i) => (
               <div key={i} className="gallery-carousel-card" style={{ flex: '0 0 82vw', maxWidth: 320 }}>
                 <Link href={itemHref(item)} style={{ display: 'block' }}>
-                  <MockPhoto variant={item.variant} label={item.name} category={item.category} />
+                  <MockPhoto
+                    variant={item.variant}
+                    label={item.name}
+                    category={item.category}
+                    imageUrl={item.image_url}
+                  />
                 </Link>
               </div>
             ))}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 20 }}>
-            {GALLERY_ALL.map((_, i) => (
+            {galleryItems.map((_, i) => (
               <button
                 key={i}
                 onClick={() => scrollToPhoto(i)}
-                aria-label={`Foto ${i + 1} de ${GALLERY_ALL.length}`}
+                aria-label={`Foto ${i + 1} de ${galleryItems.length}`}
                 style={{
                   width: activePhoto === i ? 20 : 6,
                   height: 6,
