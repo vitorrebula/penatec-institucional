@@ -16,7 +16,7 @@ const HERO_VIDEO_SRC =
   'https://penatec.com.br/wp-content/uploads/2024/08/WhatsApp-Video-2024-07-15-at-14.52.28_1.mp4';
 
 const HERO_POSTER_SRC =
-  'https://images.pexels.com/photos/5490228/pexels-photo-5490228.jpeg?auto=compress&cs=tinysrgb&w=1280';
+  './paes.svg';
 
 // Dark industrial bakery environment background
 const HERO_BG_SRC =
