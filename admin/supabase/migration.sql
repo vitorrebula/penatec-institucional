@@ -18,6 +18,7 @@ create table if not exists public.products (
                               )),
   badge           text,
   destaque        boolean     not null default false,
+  price           numeric(12,2),
   image_url       text,
   image_public_id text,
   created_at      timestamptz not null default now(),
@@ -57,6 +58,11 @@ create policy "Public read access"
   for select
   to anon
   using (true);
+
+-- ============================================================
+-- Se a tabela já existir, rode apenas este comando para adicionar o campo:
+-- alter table public.products add column if not exists price numeric(12,2);
+-- ============================================================
 
 -- ============================================================
 -- AFTER running this migration:

@@ -186,10 +186,29 @@ export default function ProdutoDetailPage({
 
               <motion.p variants={fadeUp} style={{
                 fontFamily: 'var(--font-inter)', fontSize: 15.5, lineHeight: 1.7,
-                color: 'rgba(255,255,255,0.5)', maxWidth: 460, marginBottom: 40,
+                color: 'rgba(255,255,255,0.5)', maxWidth: 460, marginBottom: product.price != null ? 24 : 40,
               }}>
                 {product.description}
               </motion.p>
+
+              {product.price != null && (
+                <motion.div variants={fadeUp} style={{ marginBottom: 40 }}>
+                  <span style={{
+                    fontFamily: 'var(--font-barlow)', fontWeight: 900,
+                    fontSize: 'clamp(28px, 3.5vw, 42px)',
+                    color: '#FFCB08', letterSpacing: '-0.01em',
+                  }}>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                  </span>
+                  <span style={{
+                    display: 'block',
+                    fontFamily: 'var(--font-inter)', fontSize: 12,
+                    color: 'rgba(255,255,255,0.35)', marginTop: 4,
+                  }}>
+                    Consulte condições de pagamento
+                  </span>
+                </motion.div>
+              )}
 
               <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 <a href="#especificacoes" style={{

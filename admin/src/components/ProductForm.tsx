@@ -38,6 +38,7 @@ export default function ProductForm({ product }: Props) {
   const [variant, setVariant] = useState<ProductVariant>(product?.variant ?? 'dark-blue')
   const [badge, setBadge] = useState(product?.badge ?? '')
   const [destaque, setDestaque] = useState(product?.destaque ?? false)
+  const [price, setPrice] = useState(product?.price != null ? String(product.price) : '')
 
   // Image state
   const [currentImageUrl, setCurrentImageUrl] = useState(product?.image_url ?? null)
@@ -175,6 +176,8 @@ export default function ProductForm({ product }: Props) {
         imagePublicId = null
       }
 
+      const parsedPrice = price.trim() ? parseFloat(price.replace(',', '.')) : null
+
       const supabase = createClient()
 
       const payload = {
@@ -185,6 +188,7 @@ export default function ProductForm({ product }: Props) {
         variant,
         badge: badge.trim() || null,
         destaque,
+        price: parsedPrice != null && !isNaN(parsedPrice) ? parsedPrice : null,
         image_url: imageUrl,
         image_public_id: imagePublicId,
         gallery_images: tab === 'maquinas' ? (galleryImages.length ? galleryImages : null) : null,
@@ -276,6 +280,20 @@ export default function ProductForm({ product }: Props) {
               placeholder="Ex: Linha Industrial"
               maxLength={80}
               required
+            />
+          </div>
+
+          <div>
+            <label className="form-label" htmlFor="price">Preço (R$) <span style={{ fontWeight: 400, color: 'rgba(23,35,58,0.4)' }}>opcional</span></label>
+            <input
+              id="price"
+              type="text"
+              inputMode="decimal"
+              className="form-input"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Ex: 1.290,00"
+              maxLength={20}
             />
           </div>
 

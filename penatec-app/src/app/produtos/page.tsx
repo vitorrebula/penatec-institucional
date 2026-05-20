@@ -132,6 +132,17 @@ function ItemCard({ item, index }: { item: Product; index: number }) {
           {item.description}
         </p>
 
+        {item.price != null && (
+          <div style={{ marginTop: 16 }}>
+            <span style={{
+              fontFamily: 'var(--font-barlow)', fontWeight: 900,
+              fontSize: 20, color: '#17233A', letterSpacing: '-0.01em',
+            }}>
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}
+            </span>
+          </div>
+        )}
+
         <div style={{
           marginTop: 20, paddingTop: 16,
           borderTop: '1px solid rgba(23,35,58,0.08)',

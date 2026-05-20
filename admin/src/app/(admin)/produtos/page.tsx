@@ -233,7 +233,7 @@ export default function ProdutosPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid rgba(23,35,58,0.08)' }}>
-                  {['Imagem', 'Nome', 'Categoria', 'Tipo', 'Destaque', 'Badge', 'Ações'].map((h) => (
+                  {['Imagem', 'Nome', 'Categoria', 'Preço', 'Tipo', 'Destaque', 'Badge', 'Ações'].map((h) => (
                     <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontFamily: 'var(--font-barlow)', fontWeight: 700, fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(23,35,58,0.45)', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -263,6 +263,14 @@ export default function ProdutosPage() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ fontFamily: 'var(--font-inter)', fontSize: 13, color: 'rgba(23,35,58,0.7)' }}>{product.category}</span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      {product.price != null
+                        ? <span style={{ fontFamily: 'var(--font-barlow)', fontWeight: 800, fontSize: 13, color: '#17233A' }}>
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                          </span>
+                        : <span style={{ color: 'rgba(23,35,58,0.18)', fontSize: 18 }}>—</span>
+                      }
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ display: 'inline-block', padding: '3px 10px', backgroundColor: product.tab === 'maquinas' ? 'rgba(23,35,58,0.07)' : 'rgba(255,203,8,0.12)', fontFamily: 'var(--font-barlow)', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: product.tab === 'maquinas' ? '#17233A' : '#8B6D00' }}>
@@ -363,11 +371,16 @@ export default function ProdutosPage() {
                         fontFamily: 'var(--font-inter)',
                         fontSize: 12,
                         color: 'rgba(23,35,58,0.42)',
-                        marginBottom: 8,
+                        marginBottom: product.price != null ? 4 : 8,
                       }}
                     >
                       {product.category}
                     </p>
+                    {product.price != null && (
+                      <p style={{ fontFamily: 'var(--font-barlow)', fontWeight: 800, fontSize: 13, color: '#17233A', marginBottom: 8 }}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                      </p>
+                    )}
 
                     {/* Tags row */}
                     <div className="flex items-center gap-1.5 flex-wrap">

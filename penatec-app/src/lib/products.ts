@@ -22,6 +22,7 @@ export interface Product {
   variant: ProductVariant
   badge: string | null
   destaque: boolean
+  price: number | null
   image_url: string | null
   image_public_id: string | null
   gallery_images: GalleryImage[] | null
